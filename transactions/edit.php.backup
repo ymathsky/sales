@@ -1,0 +1,403 @@
+<?php
+/**
+ * Edit Transaction
+ */
+
+require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../models/Transaction.php';
+require_once __DIR__ . '/../models/Company.php';
+
+requireLogin();
+
+$pageTitle = 'Edit Transaction';
+
+$transactionId = (int)($_GET['id'] ?? 0);
+$companyId = (int)($_GET['company'] ?? getCurrentCompanyId());
+
+requireCompanyAccess($companyId);
+
+// Verify user has write access
+if (!userHasWriteAccess(getCurrentUserId(), $companyId)) {
+    die('You do not have permission to edit transactions for this company');
+}
+
+$transaction = Transaction::getById($transactionId, $companyId);
+if (!$transaction) {
+    die('Transaction not found');
+}
+
+$currentReceipts = Transaction::getReceipts($transactionId);
+$errors = [];
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['delete'])) {
+        // Handle deletion
+        Transaction::delete($transactionId, $companyId);
+        setFlashMessage('✓ Transaction #' . $transactionId . ' deleted successfully!', 'success');
+        redirect("/sales/transactions/list.php?company={$companyId}");
+    } elseif (isset($_POST['delete_receipt_id'])) {
+        // Handle separate receipt deletion
+        if (Transaction::deleteReceipt($_POST['delete_receipt_id'], $transactionId)) {
+            setFlashMessage('Receipt deleted successfully', 'success');
+        } else {
+            setFlashMessage('Failed to delete receipt', 'error');
+        }
+        redirect("/sales/transactions/edit.php?id={$transactionId}&company={$companyId}");
+    } else {
+        // Handle multiple receipt uploads
+        $uploadedCount = 0;
+        if (!empty($_FILES['receipts']['name'][0])) {
+            $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+            $maxSize = 5 * 1024 * 1024; // 5MB
+            
+            $fileCount = count($_FILES['receipts']['name']);
+            
+            for ($i = 0; $i < $fileCount; $i++) {
+                if ($_FILES['receipts']['error'][$i] === UPLOAD_ERR_OK) {
+                    $fileType = $_FILES['receipts']['type'][$i];
+                    $fileSize = $_FILES['receipts']['size'][$i];
+                    
+                    if (in_array($fileType, $allowedTypes)) {
+                        if ($fileSize <= $maxSize) {
+                            $originalName = $_FILES['receipts']['name'][$i];
+                            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+                            $fileName = 'receipt_' . $companyId . '_' . time() . '_' . uniqid() . '.' . $extension;
+                            $uploadDir = __DIR__ . '/../uploads/receipts/';
+                            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                            
+                            $uploadPath = $uploadDir . $fileName;
+                            
+                            if (move_uploaded_file($_FILES['receipts']['tmp_name'][$i], $uploadPath)) {
+                                $dbPath = 'uploads/receipts/' . $fileName;
+                                Transaction::addReceipt($transactionId, $dbPath, $originalName);
+                                $uploadedCount++;
+                            } else {
+                                $errors[] = "Failed to upload file: $originalName";
+                            }
+                        } else {
+                            $errors[] = "File too large: " . $_FILES['receipts']['name'][$i];
+                        }
+                    } else {
+                        $errors[] = "Invalid file type: " . $_FILES['receipts']['name'][$i];
+                    }
+                }
+            }
+        }
+
+        // Handle update
+        $formData = [
+            'type' => $_POST['type'] ?? 'in',
+            'amount' => $_POST['amount'] ?? '',
+            'transaction_date' => $_POST['transaction_date'] ?? '',
+            'category' => sanitizeInput($_POST['category'] ?? ''),
+            'description' => sanitizeInput($_POST['description'] ?? ''),
+            'reference_number' => sanitizeInput($_POST['reference_number'] ?? ''),
+            'payment_method' => $_POST['payment_method'] ?? 'cash',
+            'receipt_path' => null // Deprecated, keeping null or ignoring
+        ];
+        
+        // Preserve legacy receipt_path if it exists and wasn't changed
+        // Actually we don't need to update it anymore as we use the relation table
+        // But to call update() we need to pass something. Let's pass the existing one from $transaction
+        $formData['receipt_path'] = $transaction['receipt_path'];
+
+        // Validation
+        if (!in_array($formData['type'], ['in', 'out'])) {
+            $errors[] = 'Invalid transaction type';
+        }
+        
+        if (!isValidAmount($formData['amount'])) {
+            $errors[] = 'Invalid amount';
+        }
+        
+        if (!isValidDate($formData['transaction_date'])) {
+            $errors[] = 'Invalid date';
+        }
+        
+        // Update transaction if no errors
+        if (empty($errors)) {
+            try {
+                Transaction::update($transactionId, $companyId, $formData);
+                setFlashMessage('✓ Transaction updated successfully! Amount: ₱' . number_format($formData['amount'], 2), 'success');
+                redirect("/sales/transactions/list.php?company={$companyId}");
+            } catch (Exception $e) {
+                $errors[] = 'Failed to update transaction: ' . $e->getMessage();
+            }
+        } else {
+            $transaction = array_merge($transaction, $formData);
+        }
+    }
+}
+
+$categories = Transaction::getCategories($companyId);
+
+include __DIR__ . '/../views/header.php';
+?>
+
+<div class="page-header">
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 12px; border-radius: 12px; color: white; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">
+            <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+        </div>
+        <div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #1f2937;">Edit Transaction</h1>
+            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Modify transaction details or update receipt.</p>
+        </div>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <a href="/sales/transactions/list.php?company=<?= $companyId ?>" 
+           class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 500; display: flex; align-items: center; gap: 6px; padding: 8px 16px;">
+            Cancel
+        </a>
+        <button type="submit" form="transactionForm"
+                style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; color: white; padding: 8px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">
+            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Save
+        </button>
+    </div>
+</div>
+
+<?php if (!empty($errors)): ?>
+    <div class="alert alert-error" style="background-color: #fef2f2; border-color: #fee2e2; color: #b91c1c; border-radius: 8px; padding: 16px; margin-bottom: 24px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+        <div style="font-weight: 600; margin-bottom: 8px;">Please correct the following errors:</div>
+        <ul style="margin: 0; padding-left: 20px;">
+            <?php foreach ($errors as $error): ?>
+                <li><?= htmlspecialchars($error) ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
+<div class="row">
+    <div class="card" style="max-width: 1000px; margin: 0 auto; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #f3f4f6; overflow: hidden;">
+        <div style="background: #f9fafb; padding: 20px 32px; border-bottom: 1px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                 <h2 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0;">Transaction Details</h2>
+                 <span style="font-size: 13px; color: #6b7280;">ID: #<?= $transactionId ?></span>
+            </div>
+        </div>
+        
+        <form id="transactionForm" method="POST" action="" enctype="multipart/form-data" style="padding: 32px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 32px;">
+                <!-- Left Column: Form Fields -->
+                <div style="flex: 2; min-width: 300px;">
+                    <!-- Type -->
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Transaction Type <span style="color: #ef4444">*</span></label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="type" value="in" class="sr-only peer" <?= $transaction['type'] === 'in' ? 'checked' : '' ?> onchange="updateTypeStyles()">
+                                <div class="type-card type-in" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; text-align: center; transition: all 0.2s;">
+                                    <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">Cash In</div>
+                                    <div style="font-size: 12px;">Income, Deposits</div>
+                                </div>
+                            </label>
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="type" value="out" class="sr-only peer" <?= $transaction['type'] === 'out' ? 'checked' : '' ?> onchange="updateTypeStyles()">
+                                <div class="type-card type-out" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; text-align: center; transition: all 0.2s;">
+                                    <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">Cash Out</div>
+                                    <div style="font-size: 12px;">Expenses, Withdrawals</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <!-- Amount -->
+                        <div class="form-group">
+                            <label for="amount" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Amount <span style="color: #ef4444">*</span></label>
+                            <div style="position: relative;">
+                                <div style="position: absolute; left: 12px; top: 10px; color: #6b7280; font-weight: 500;">₱</div>
+                                <input type="number" step="0.01" id="amount" name="amount" required
+                                       value="<?= htmlspecialchars($transaction['amount']) ?>"
+                                       style="width: 100%; padding: 10px 12px 10px 32px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; font-weight: 600; color: #111827; outline: none; transition: border-color 0.15s, box-shadow 0.15s;"
+                                       onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 2px rgba(99,102,241,0.2)';"
+                                       onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';">
+                            </div>
+                        </div>
+
+                        <!-- Date -->
+                        <div class="form-group">
+                            <label for="transaction_date" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Date <span style="color: #ef4444">*</span></label>
+                            <input type="date" id="transaction_date" name="transaction_date" required
+                                   value="<?= htmlspecialchars($transaction['transaction_date']) ?>"
+                                   style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;"
+                                   onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 2px rgba(99,102,241,0.2)';"
+                                   onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';">
+                        </div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label for="category" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Category</label>
+                        <input list="category-list" id="category" name="category" 
+                               value="<?= htmlspecialchars($transaction['category']) ?>"
+                               placeholder="Type or select category"
+                               style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;"
+                               onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 2px rgba(99,102,241,0.2)';"
+                               onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';">
+                        <datalist id="category-list">
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= htmlspecialchars($cat['category']) ?>"></option>
+                            <?php endforeach; ?>
+                        </datalist>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label for="payment_method" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Payment Method</label>
+                        <select id="payment_method" name="payment_method" 
+                                style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; background-color: #fff; outline: none; transition: border-color 0.15s, box-shadow 0.15s;"
+                                onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 2px rgba(99,102,241,0.2)';"
+                                onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';">
+                            <option value="cash" <?= $transaction['payment_method'] === 'cash' ? 'selected' : '' ?>>Cash</option>
+                            <option value="bank_transfer" <?= $transaction['payment_method'] === 'bank_transfer' ? 'selected' : '' ?>>Bank Transfer</option>
+                            <option value="check" <?= $transaction['payment_method'] === 'check' ? 'selected' : '' ?>>Check</option>
+                            <option value="other" <?= $transaction['payment_method'] === 'other' ? 'selected' : '' ?>>Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label for="description" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Description / Notes</label>
+                        <textarea id="description" name="description" rows="3" 
+                                  placeholder="e.g. Monthly subscription payment"
+                                  style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;"
+                                  onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 2px rgba(99,102,241,0.2)';"
+                                  onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';"><?= htmlspecialchars($transaction['description']) ?></textarea>
+                    </div>
+
+                    <!-- Reference Number -->
+                    <div class="form-group">
+                        <label for="reference_number" style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Reference Number <span style="color: #9ca3af; font-weight: normal;">(Optional)</span></label>
+                        <input type="text" id="reference_number" name="reference_number" 
+                               value="<?= htmlspecialchars($transaction['reference_number']) ?>"
+                               placeholder="e.g. INV-2024-001"
+                               style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;"
+                               onfocus="this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 2px rgba(99,102,241,0.2)';"
+                               onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';">
+                    </div>
+                </div>
+
+                <!-- Right Column: Receipt Upload -->
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Receipts</label>
+                    <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;">
+                        
+                        <!-- Existing Receipts List -->
+                        <?php if (!empty($currentReceipts)): ?>
+                            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                <?php foreach ($currentReceipts as $receipt): ?>
+                                    <?php 
+                                        $ext = strtolower(pathinfo($receipt['file_path'], PATHINFO_EXTENSION));
+                                        $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                        $displayName = $receipt['original_name'] ?? basename($receipt['file_path']);
+                                    ?>
+                                    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'" onmouseout="this.style.boxShadow='none'">
+                                        <!-- Thumbnail -->
+                                        <div style="width: 48px; height: 48px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid #f3f4f6;">
+                                            <?php if ($isImage): ?>
+                                                <img src="/sales/<?= $receipt['file_path'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <?php else: ?>
+                                                <svg style="width: 20px; height: 20px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Details -->
+                                        <div style="flex: 1; overflow: hidden;">
+                                            <div style="font-size: 13px; font-weight: 500; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($displayName) ?>">
+                                                <?= htmlspecialchars($displayName) ?>
+                                            </div>
+                                            <a href="/sales/<?= $receipt['file_path'] ?>" target="_blank" style="font-size: 11px; color: #4f46e5; text-decoration: none; font-weight: 500;">View File</a>
+                                        </div>
+
+                                        <!-- Delete Button (triggers hidden form) -->
+                                        <button type="submit" form="delete-receipt-<?= $receipt['id'] ?>" 
+                                                onclick="return confirm('Delete this receipt?');"
+                                                style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 6px; border-radius: 4px; transition: all 0.2s; display: flex;" 
+                                                onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'" 
+                                                onmouseout="this.style.background='none'; this.style.color='#9ca3af'"
+                                                title="Delete Receipt">
+                                            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <!-- Upload Area -->
+                        <div id="upload-area">
+                            <label for="receipts" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; border: 2px dashed #e5e7eb; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#6366f1'; this.style.backgroundColor='#eef2ff';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='#fff';">
+                                <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 50%; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: #4f46e5;">
+                                    <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </div>
+                                <span style="font-size: 14px; font-weight: 600; color: #374151; text-align: center;">Add Receipts</span>
+                                <span style="font-size: 11px; color: #6b7280; margin-top: 4px; text-align: center;">Click to select multiple files</span>
+                            </label>
+                            <input type="file" id="receipts" name="receipts[]" multiple accept="image/*,application/pdf" style="display: none;" onchange="updateFileCount(this)">
+                        </div>
+                        <div id="file-count-display" style="margin-top: 12px; font-size: 13px; color: #047857; text-align: center; display: none; background: #ecfdf5; padding: 6px; border-radius: 6px;"></div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding-top: 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                <button type="submit" name="delete" value="1" 
+                        onclick="return confirm('Are you sure you want to delete this transaction? This cannot be undone.');"
+                        style="background: white; border: 1px solid #ef4444; color: #ef4444; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Delete Transaction
+                </button>
+                
+                <div style="display: flex; gap: 12px;">
+                    <a href="/sales/transactions/list.php?company=<?= $companyId ?>" 
+                       style="padding: 10px 20px; color: #4b5563; font-weight: 500; text-decoration: none; display: flex; align-items: center;">Cancel</a>
+                    <button type="submit" 
+                            style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; color: white; padding: 10px 32px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); transition: all 0.2s;">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Hidden Delete Forms -->
+<?php if (!empty($currentReceipts)): ?>
+    <?php foreach ($currentReceipts as $receipt): ?>
+        <form id="delete-receipt-<?= $receipt['id'] ?>" method="POST" action="" style="display: none;">
+            <input type="hidden" name="delete_receipt_id" value="<?= $receipt['id'] ?>">
+        </form>
+    <?php endforeach; ?>
+<?php endif; ?>
+
+<style>
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+input[type="radio"]:checked + .type-card.type-in { background-color: #ecfdf5; border-color: #10b981; color: #047857; box-shadow: 0 0 0 1px #10b981; }
+input[type="radio"]:checked + .type-card.type-out { background-color: #fef2f2; border-color: #ef4444; color: #b91c1c; box-shadow: 0 0 0 1px #ef4444; }
+</style>
+
+<script>
+function updateTypeStyles() {
+    // Styles are handled by CSS :checked selector
+}
+
+function updateFileCount(input) {
+    const fileCount = input.files ? input.files.length : 0;
+    const display = document.getElementById('file-count-display');
+    
+    if (fileCount > 0) {
+        display.textContent = fileCount + ' file(s) selected';
+        display.style.display = 'block';
+    } else {
+        display.style.display = 'none';
+    }
+}
+</script>
+
+<?php include __DIR__ . '/../views/footer.php'; ?>

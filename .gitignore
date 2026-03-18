@@ -1,0 +1,33 @@
+# Dependencies
+/vendor/
+/node_modules/
+/bower_components/
+
+# Configuration
+/config/database.php
+/.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+
+# User Uploads
+/uploads/
+!/uploads/.gitkeep
+/uploads/receipts/
+!/uploads/receipts/.gitkeep
+
+# Logs
+/logs/
+*.log
+error_log
+
+# IDE
+/.idea/
+/.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary
+/.tmp/
+/temp/

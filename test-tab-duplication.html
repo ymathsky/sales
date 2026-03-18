@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Duplication Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            margin: 0 0 8px 0;
+            color: #1f2937;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .test-btn {
+            padding: 14px 20px;
+            border: 2px solid #2563eb;
+            background: white;
+            color: #2563eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .test-btn:hover {
+            background: #2563eb;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .log-container {
+            background: #1e293b;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 24px;
+        }
+        .log-entry {
+            margin: 4px 0;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .log-duplicate {
+            color: #f59e0b;
+        }
+        .log-new {
+            color: #10b981;
+        }
+        .instructions {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .instructions strong {
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Tab Duplication Prevention Test</h1>
+        <p style="color: #6b7280; margin-bottom: 20px;">
+            Click the buttons below multiple times to test duplicate prevention
+        </p>
+
+        <div class="instructions">
+            <strong>Instructions:</strong>
+            <ul style="margin: 8px 0 0 20px; line-height: 1.8;">
+                <li>Click any button multiple times rapidly</li>
+                <li>Watch the log below - duplicates are prevented</li>
+                <li>Same URLs will switch to existing tab instead of creating new one</li>
+                <li>Different URLs create new tabs</li>
+            </ul>
+        </div>
+
+        <div class="test-grid">
+            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1')">
+                📄 Transactions (same URL)
+            </button>
+            <button class="test-btn" onclick="testUrl('/sales/invoices/list.php?company=1')">
+                🧾 Invoices (same URL)
+            </button>
+            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1&filter=all')">
+                📋 Transactions + Filter
+            </button>
+            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?filter=all&company=1')">
+                📋 Same (different order)
+            </button>
+            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1/')">
+                📄 With trailing slash
+            </button>
+            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1')">
+                📄 Without trailing slash
+            </button>
+        </div>
+
+        <div class="log-container" id="logContainer">
+            <div class="log-entry">🔧 Tab system test ready. Click buttons above...</div>
+        </div>
+
+        <div style="margin-top: 20px; padding: 16px; background: #f3f4f6; border-radius: 8px;">
+            <strong>Expected Behavior:</strong>
+            <ul style="margin: 8px 0 0 20px; color: #4b5563;">
+                <li>Clicking same URL = Switches to existing tab (🟡 yellow)</li>
+                <li>Clicking different URL = Creates new tab (🟢 green)</li>
+                <li>URLs with different param order = Same tab</li>
+                <li>URLs with/without trailing slash = Same tab</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let testTabs = [];
+        let testCounter = 0;
+
+        // Normalize URL (same logic as tabs.js)
+        function normalizeUrl(url) {
+            try {
+                if (url.startsWith('/')) {
+                    url = window.location.origin + url;
+                }
+                const urlObj = new URL(url);
+                const params = Array.from(urlObj.searchParams.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+                urlObj.search = '';
+                params.forEach(([key, value]) => urlObj.searchParams.append(key, value));
+                urlObj.pathname = urlObj.pathname.replace(/\/$/, '') || '/';
+                return urlObj.href;
+            } catch (e) {
+                return url;
+            }
+        }
+
+        function testUrl(url) {
+            const normalizedUrl = normalizeUrl(url);
+            const existingTab = testTabs.find(tab => normalizeUrl(tab.url) === normalizedUrl);
+            
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            if (existingTab) {
+                // Duplicate detected
+                const entry = document.createElement('div');
+                entry.className = 'log-entry log-duplicate';
+                entry.innerHTML = `[${timestamp}] 🟡 DUPLICATE PREVENTED: "${url}" → Switched to existing tab #${existingTab.id}`;
+                logContainer.insertBefore(entry, logContainer.firstChild);
+            } else {
+                // New tab
+                testCounter++;
+                const newTab = { id: testCounter, url: url };
+                testTabs.push(newTab);
+                
+                const entry = document.createElement('div');
+                entry.className = 'log-entry log-new';
+                entry.innerHTML = `[${timestamp}] 🟢 NEW TAB #${testCounter}: "${url}"`;
+                logContainer.insertBefore(entry, logContainer.firstChild);
+            }
+
+            // Auto-scroll to top
+            logContainer.scrollTop = 0;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification System Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .demo-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            margin: 0 0 8px 0;
+            color: #1f2937;
+            font-size: 28px;
+        }
+        p {
+            margin: 0 0 24px 0;
+            color: #6b7280;
+        }
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .demo-btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-success { background: #10b981; }
+        .btn-error { background: #ef4444; }
+        .btn-warning { background: #f59e0b; }
+        .btn-info { background: #3b82f6; }
+        .demo-code {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #374151;
+            overflow-x: auto;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            color: #4b5563;
+        }
+        .feature-list li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🔔 Notification System Demo</h1>
+        <p>Click the buttons below to see different notification types:</p>
+        
+        <div class="btn-grid">
+            <button class="demo-btn btn-success" onclick="showSuccess('Transaction created! Amount: ₱1,250.00')">
+                ✓ Success
+            </button>
+            <button class="demo-btn btn-error" onclick="showError('Failed to save transaction. Please try again.')">
+                ✗ Error
+            </button>
+            <button class="demo-btn btn-warning" onclick="showWarning('Low stock alert: Product quantity below 10 units')">
+                ⚠ Warning
+            </button>
+            <button class="demo-btn btn-info" onclick="showInfo('Receipt has been sent to your email')">
+                ℹ Info
+            </button>
+        </div>
+
+        <h3 style="margin: 24px 0 12px 0; color: #1f2937;">Features:</h3>
+        <ul class="feature-list">
+            <li>Auto-dismiss after 3-5 seconds</li>
+            <li>Manual close button</li>
+            <li>Smooth slide-in animation</li>
+            <li>Multiple notifications stack</li>
+            <li>4 types: success, error, warning, info</li>
+            <li>Mobile responsive</li>
+        </ul>
+
+        <h3 style="margin: 24px 0 12px 0; color: #1f2937;">Usage:</h3>
+        <div class="demo-code">showSuccess('Your message here');<br>showError('Error message');<br>showWarning('Warning message');<br>showInfo('Info message');</div>
+
+        <h3 style="margin: 24px 0 12px 0; color: #1f2937;">Integrated In:</h3>
+        <ul class="feature-list">
+            <li>Transaction create/update/delete</li>
+            <li>Product add/edit/delete</li>
+            <li>POS sale completion</li>
+            <li>All flash messages</li>
+        </ul>
+    </div>
+
+    <script src="/sales/assets/js/notifications.js"></script>
+</body>
+</html>

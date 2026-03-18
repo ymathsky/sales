@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Scope Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e293b;
+            color: #10b981;
+            padding: 40px;
+            line-height: 1.6;
+        }
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #0f172a;
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        h1 {
+            color: #10b981;
+            border-bottom: 2px solid #10b981;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            background: #1e293b;
+            padding: 16px;
+            margin: 16px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .test-btn {
+            background: #10b981;
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+            font-size: 14px;
+        }
+        .test-btn:hover {
+            background: #059669;
+        }
+        .result {
+            background: #0f172a;
+            padding: 12px;
+            margin: 12px 0;
+            border-left: 4px solid #6b7280;
+            font-size: 13px;
+        }
+        .success {
+            border-left-color: #10b981;
+            color: #10b981;
+        }
+        .error {
+            border-left-color: #ef4444;
+            color: #ef4444;
+        }
+        pre {
+            background: #0f172a;
+            padding: 12px;
+            overflow-x: auto;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            color: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Script Scope Isolation Test</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Without IIFE (causes error)</h3>
+            <p>This simulates the OLD behavior that caused "already declared" errors:</p>
+            <button class="test-btn" onclick="testWithoutIIFE()">Run Test (Expect Error)</button>
+            <div id="result1" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: With IIFE (fixed)</h3>
+            <p>This simulates the NEW behavior with IIFE wrapper:</p>
+            <button class="test-btn" onclick="testWithIIFE()">Run Test (Should Pass)</button>
+            <div id="result2" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Multiple Tabs Simulation</h3>
+            <p>Simulate loading same script content 5 times (like opening 5 tabs):</p>
+            <button class="test-btn" onclick="testMultipleTabs()">Simulate 5 Tabs</button>
+            <div id="result3" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Explanation</h3>
+            <pre>
+// WITHOUT IIFE (Global Scope - ERROR)
+let cameraStream = null;  // First execution: OK
+let cameraStream = null;  // Second execution: ❌ ERROR!
+                          // "cameraStream already declared"
+
+// WITH IIFE (Function Scope - OK)
+(function() {
+    let cameraStream = null;  // First execution: OK
+})();
+(function() {
+    let cameraStream = null;  // Second execution: ✓ OK!
+})();                         // Each has isolated scope
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        function testWithoutIIFE() {
+            const result = document.getElementById('result1');
+            result.className = 'result';
+            
+            try {
+                // Try to execute the same declaration twice
+                const script1 = `let testVar1 = "first";`;
+                const script2 = `let testVar1 = "second";`;
+                
+                eval(script1);
+                eval(script2);  // This will throw error
+                
+                result.className = 'result success';
+                result.textContent = '✗ UNEXPECTED: Should have thrown error!';
+            } catch (e) {
+                result.className = 'result error';
+                result.textContent = `✓ EXPECTED ERROR: ${e.message}`;
+            }
+        }
+
+        function testWithIIFE() {
+            const result = document.getElementById('result2');
+            result.className = 'result';
+            
+            try {
+                // Execute same code wrapped in IIFE - should work
+                const script1 = `(function() { let testVar2 = "first"; })();`;
+                const script2 = `(function() { let testVar2 = "second"; })();`;
+                const script3 = `(function() { let testVar2 = "third"; })();`;
+                
+                eval(script1);
+                eval(script2);
+                eval(script3);
+                
+                result.className = 'result success';
+                result.textContent = '✓ SUCCESS: All 3 scripts executed without errors! Each has isolated scope.';
+            } catch (e) {
+                result.className = 'result error';
+                result.textContent = `✗ ERROR: ${e.message}`;
+            }
+        }
+
+        function testMultipleTabs() {
+            const result = document.getElementById('result3');
+            result.className = 'result';
+            let output = '';
+            let errorCount = 0;
+            
+            // Simulate 5 tabs loading the same script
+            for (let i = 1; i <= 5; i++) {
+                try {
+                    // This simulates what tabs.js does now
+                    const wrappedScript = `
+                        (function() {
+                            try {
+                                let cameraStream = null;
+                                let capturedImage = null;
+                                console.log('Tab ${i} initialized');
+                            } catch(e) {
+                                console.warn('Tab script error:', e);
+                            }
+                        })();
+                    `;
+                    eval(wrappedScript);
+                    output += `Tab ${i}: ✓ OK\n`;
+                } catch (e) {
+                    output += `Tab ${i}: ✗ ${e.message}\n`;
+                    errorCount++;
+                }
+            }
+            
+            if (errorCount === 0) {
+                result.className = 'result success';
+                result.innerHTML = `<strong>✓ ALL TABS PASSED!</strong>\n${output}\n<em>All 5 tabs loaded successfully with isolated scopes.</em>`;
+            } else {
+                result.className = 'result error';
+                result.innerHTML = `<strong>✗ ${errorCount} TAB(S) FAILED</strong>\n${output}`;
+            }
+        }
+
+        // Auto-run tests on load
+        window.onload = function() {
+            console.log('Script Scope Test Page Loaded');
+            console.log('Click buttons above to run tests');
+        };
+    </script>
+</body>
+</html>
