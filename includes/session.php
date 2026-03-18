@@ -22,8 +22,11 @@ function isLoggedIn() {
  * Require authentication - redirect to login if not authenticated
  */
 function requireLogin() {
+    // Ensure WEB_ROOT is defined
+    $webRoot = defined('WEB_ROOT') ? WEB_ROOT : '';
+    
     if (!isLoggedIn()) {
-        header('Location: <?= WEB_ROOT ?>/auth/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+        header('Location: ' . $webRoot . '/auth/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
         exit;
     }
 }
