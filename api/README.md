@@ -36,3 +36,10 @@ Base URL: `/sales/api/`
 **POST** `/companies.php`
 - Body: `{ "company_id": 123 }`
 - Switch active company context.
+
+## Mobile Development Note
+When connecting from an Emulator/Simulator:
+- **Android Emulator**: Use `http://10.0.2.2/sales/api/`
+- **iOS Simulator**: Use `http://localhost/sales/api/`
+- **Physical Device**: Use your PC's IP address (e.g., `http://192.168.1.x/sales/api/`)
+
