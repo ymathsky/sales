@@ -9,7 +9,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Ensure WEB_ROOT is defined if config hasn't been loaded yet
+// Load configuration if available
+if (file_exists(__DIR__ . '/../config/database.php')) {
+    require_once __DIR__ . '/../config/database.php';
+}
+
+// Fallback for WEB_ROOT if not defined (e.g. config missing)
 if (!defined('WEB_ROOT')) {
     define('WEB_ROOT', '');
 }
