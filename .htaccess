@@ -3,17 +3,22 @@ Options -Indexes
 
 # Protect sensitive files
 <FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
 
 <FilesMatch "(composer\.json|composer\.lock|package\.json|package-lock\.json|\.env|database\.php|\.sql|README\.md)">
-    Order allow,deny
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
 
-# Allow access to database.sample.php only (if needed for reference, otherwise block all php in config)
-<Files "database.sample.php">
-    Order allow,deny
-    Allow from all
-</Files>
