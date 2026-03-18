@@ -6,9 +6,9 @@
 
 // Database credentials
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'sales_cash_flow');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'mdoffic1_sales_cash_flow');
+define('DB_USER', 'mdoffic1_sales');
+define('DB_PASS', 'YOUR_PASSWORD_HERE');
 
 // Database connection options
 define('DB_CHARSET', 'utf8mb4');
