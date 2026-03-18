@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Cash Flow",
+    "slug": "cashflow-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#2563EB"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mdofficesupport.cashflow"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#2563EB"
+      },
+      "package": "com.mdofficesupport.cashflow"
+    }
+  }
+}

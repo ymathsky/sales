@@ -52,9 +52,9 @@ $company = Company::getById($companyId);
 echo json_encode([
     'success' => true,
     'company' => [
-        'id' => $company['company_id'],
+        'company_id' => $company['company_id'],
         'name' => $company['name'],
-        'currency' => '$' // Hardcoded for now, could be dynamic
+        'currency' => '₱'
     ],
     'period' => date('F Y'),
     'summary' => [
