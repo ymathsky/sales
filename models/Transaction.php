@@ -69,14 +69,14 @@ class Transaction {
     }
     
     /**
-     * Get transaction summary (income vs expense)
+     * Get financial summary (total income/expense)
      * 
      * @param int $companyId Company ID
      * @param string|null $startDate Start date filter
      * @param string|null $endDate End date filter
      * @return array Summary data
      */
-    public static function getSummary($companyId, $startDate = null, $endDate = null) {
+    public static function getFinancialSummary($companyId, $startDate = null, $endDate = null) {
         $sql = "SELECT 
                     SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
                     SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense

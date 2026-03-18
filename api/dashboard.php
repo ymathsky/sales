@@ -38,10 +38,10 @@ if (!userHasAccessToCompany(getCurrentUserId(), $companyId)) {
 }
 
 // 1. Get Financial Summary (All Time)
-$summary = Transaction::getSummary($companyId);
+$summary = Transaction::getFinancialSummary($companyId);
 $monthStart = date('Y-m-01');
 $monthEnd = date('Y-m-t');
-$monthSummary = Transaction::getSummary($companyId, $monthStart, $monthEnd);
+$monthSummary = Transaction::getFinancialSummary($companyId, $monthStart, $monthEnd);
 
 // 2. Get Recent Transactions (Last 5)
 $recentTransactions = Transaction::getByCompany($companyId, [], 5, 0);
