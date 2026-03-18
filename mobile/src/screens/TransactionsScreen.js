@@ -7,12 +7,12 @@ import { getTransactions } from '../api/client';
 
 const TYPE_FILTERS = [
     { label: 'All', value: '' },
-    { label: 'Income', value: 'income' },
-    { label: 'Expense', value: 'expense' },
+    { label: 'Income', value: 'in' },
+    { label: 'Expense', value: 'out' },
 ];
 
 function TransactionRow({ item }) {
-    const isIncome = item.type === 'income';
+    const isIncome = item.type === 'in';
     return (
         <View style={styles.row}>
             <View style={[styles.typeBadge, { backgroundColor: isIncome ? '#D1FAE5' : '#FEE2E2' }]}>

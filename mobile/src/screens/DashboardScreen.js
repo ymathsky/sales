@@ -3,7 +3,7 @@ import {
     View, Text, StyleSheet, ScrollView, RefreshControl,
     TouchableOpacity, ActivityIndicator
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getDashboard } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,6 +38,12 @@ export default function DashboardScreen() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    useFocusEffect(
+        useCallback(() => {
+            load();
+        }, [load])
+    );
 
     function onRefresh() {
         setRefreshing(true);
@@ -94,8 +100,8 @@ export default function DashboardScreen() {
                         </Text>
                         <Text style={styles.txDate}>{t.transaction_date}</Text>
                     </View>
-                    <Text style={[styles.txAmount, { color: t.type === 'income' ? '#10B981' : '#EF4444' }]}>
-                        {t.type === 'income' ? '+' : '-'}₱{parseFloat(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    <Text style={[styles.txAmount, { color: t.type === 'in' ? '#10B981' : '#EF4444' }]}>
+                        {t.type === 'in' ? '+' : '-'}₱{parseFloat(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </Text>
                 </View>
             ))}

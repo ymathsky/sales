@@ -38,7 +38,7 @@ function OptionRow({ options, selected, onSelect }) {
 
 export default function AddTransactionScreen() {
     const navigation = useNavigation();
-    const [type, setType] = useState('income');
+    const [type, setType] = useState('in');
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [category, setCategory] = useState('');
@@ -99,18 +99,18 @@ export default function AddTransactionScreen() {
             {/* Type Toggle */}
             <View style={styles.typeToggleRow}>
                 <TouchableOpacity
-                    style={[styles.typeBtn, type === 'income' && styles.typeBtnIncome]}
-                    onPress={() => { setType('income'); setCategory(''); }}
+                    style={[styles.typeBtn, type === 'in' && styles.typeBtnIncome]}
+                    onPress={() => { setType('in'); setCategory(''); }}
                 >
-                    <Text style={[styles.typeBtnText, type === 'income' && styles.typeBtnTextActive]}>
+                    <Text style={[styles.typeBtnText, type === 'in' && styles.typeBtnTextActive]}>
                         📈 Income
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.typeBtn, type === 'expense' && styles.typeBtnExpense]}
-                    onPress={() => { setType('expense'); setCategory(''); }}
+                    style={[styles.typeBtn, type === 'out' && styles.typeBtnExpense]}
+                    onPress={() => { setType('out'); setCategory(''); }}
                 >
-                    <Text style={[styles.typeBtnText, type === 'expense' && styles.typeBtnTextActive]}>
+                    <Text style={[styles.typeBtnText, type === 'out' && styles.typeBtnTextActive]}>
                         📉 Expense
                     </Text>
                 </TouchableOpacity>
