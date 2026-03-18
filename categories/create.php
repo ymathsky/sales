@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $categoryId = Category::create($formData);
             setFlashMessage('Category created successfully', 'success');
-            header('Location: <?= WEB_ROOT ?>/categories/list.php');
+            header('Location: ' . WEB_ROOT . '/categories/list.php');
             exit;
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
