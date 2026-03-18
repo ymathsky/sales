@@ -1,8 +1,8 @@
 -- Multi-Company Cash Flow Tracking System Database Schema
 -- Created: January 28, 2026
 
-CREATE DATABASE IF NOT EXISTS sales_cash_flow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE sales_cash_flow;
+-- CREATE DATABASE IF NOT EXISTS sales_cash_flow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE sales_cash_flow;
 
 -- Companies table
 CREATE TABLE companies (

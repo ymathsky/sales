@@ -1,0 +1,19 @@
+# Disable directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "(composer\.json|composer\.lock|package\.json|package-lock\.json|\.env|database\.php|\.sql|README\.md)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to database.sample.php only (if needed for reference, otherwise block all php in config)
+<Files "database.sample.php">
+    Order allow,deny
+    Allow from all
+</Files>

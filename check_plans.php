@@ -1,5 +1,5 @@
 <?php
-require 'c:\xampp\htdocs\sales\config\database.php';
+require_once __DIR__ . '/config/database.php';
 try {
     $pdo = getDBConnection();
     // Check if table exists first
