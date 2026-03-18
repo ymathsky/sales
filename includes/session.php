@@ -9,6 +9,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Ensure WEB_ROOT is defined if config hasn't been loaded yet
+if (!defined('WEB_ROOT')) {
+    define('WEB_ROOT', '');
+}
+
 /**
  * Check if user is logged in
  * 
