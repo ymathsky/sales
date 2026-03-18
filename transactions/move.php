@@ -18,7 +18,7 @@ requireCompanyAccess($currentCompanyId);
 $transactionId = $_GET['id'] ?? $_POST['id'] ?? null;
 if (!$transactionId) {
     setFlashMessage('Transaction ID is required.', 'error');
-    header('Location: /sales/transactions/list.php?company=' . $currentCompanyId);
+    header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
     exit;
 }
 
@@ -26,7 +26,7 @@ if (!$transactionId) {
 $transaction = Transaction::getById($transactionId, $currentCompanyId);
 if (!$transaction) {
     setFlashMessage('Transaction not found or access denied.', 'error');
-    header('Location: /sales/transactions/list.php?company=' . $currentCompanyId);
+    header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
     exit;
 }
 
@@ -38,7 +38,7 @@ $targetCompanies = array_filter($allCompanies, function($company) use ($currentC
 
 if (empty($targetCompanies)) {
     setFlashMessage('You do not have access to any other companies.', 'error');
-    header('Location: /sales/transactions/list.php?company=' . $currentCompanyId);
+    header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
     exit;
 }
 
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (Transaction::moveToCompany($transactionId, $currentCompanyId, $targetCompanyId)) {
                 $targetCompany = Company::getById($targetCompanyId);
                 setFlashMessage('Transaction successfully moved to ' . htmlspecialchars($targetCompany['name']), 'success');
-                header('Location: /sales/transactions/list.php?company=' . $currentCompanyId);
+                header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
                 exit;
             } else {
                 setFlashMessage('Failed to move transaction. Please try again.', 'error');
@@ -72,7 +72,7 @@ include __DIR__ . '/../views/header.php';
 
 <div class="page-header">
     <h1><?= $pageTitle ?></h1>
-    <a href="/sales/transactions/list.php?company=<?= $currentCompanyId ?>" class="btn btn-secondary">
+    <a href="<?= WEB_ROOT ?>/transactions/list.php?company=<?= $currentCompanyId ?>" class="btn btn-secondary">
         <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
@@ -158,7 +158,7 @@ include __DIR__ . '/../views/header.php';
                     </svg>
                     Move Transaction
                 </button>
-                <a href="/sales/transactions/list.php?company=<?= $currentCompanyId ?>" class="btn btn-secondary" style="padding: 12px 24px;">Cancel</a>
+                <a href="<?= WEB_ROOT ?>/transactions/list.php?company=<?= $currentCompanyId ?>" class="btn btn-secondary" style="padding: 12px 24px;">Cancel</a>
             </div>
         </form>
     </div>

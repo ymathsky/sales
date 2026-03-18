@@ -44,7 +44,7 @@ include __DIR__ . '/../views/header.php';
 
 <div class="page-header">
     <h1>Financial Reports - <?= htmlspecialchars($company['name']) ?></h1>
-    <a href="/sales/index.php?company=<?= $companyId ?>" class="btn btn-secondary">← Dashboard</a>
+    <a href="<?= WEB_ROOT ?>/index.php?company=<?= $companyId ?>" class="btn btn-secondary">← Dashboard</a>
 </div>
 
 <div class="date-filter">
@@ -110,7 +110,7 @@ include __DIR__ . '/../views/header.php';
     
     <div class="report-actions">
         <button onclick="window.print()" class="btn btn-primary">Print Report</button>
-        <a href="/sales/transactions/list.php?company=<?= $companyId ?>&start_date=<?= $startDate ?>&end_date=<?= $endDate ?>" 
+        <a href="<?= WEB_ROOT ?>/transactions/list.php?company=<?= $companyId ?>&start_date=<?= $startDate ?>&end_date=<?= $endDate ?>" 
            class="btn btn-secondary">View Detailed Transactions</a>
     </div>
 </div>

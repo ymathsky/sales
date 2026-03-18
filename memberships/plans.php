@@ -30,12 +30,12 @@ include __DIR__ . '/../views/header.php';
         </div>
     </div>
     <div style="display: flex; gap: 10px;">
-        <a href="/sales/memberships/list.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/memberships/list.php?company=<?= $companyId ?>" 
            onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Memberships'); return false; }" 
            class="btn btn-secondary">
             ← Back to List
         </a>
-        <a href="/sales/memberships/create-plan.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/memberships/create-plan.php?company=<?= $companyId ?>" 
            onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Create Plan'); return false; }" 
            class="btn btn-primary"
            style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); border: none;">
@@ -98,7 +98,7 @@ include __DIR__ . '/../views/header.php';
                             </button>
                         </form>
                     <?php endif; ?>
-                    <a href="/sales/memberships/edit-plan.php?id=<?= $plan['plan_id'] ?>" 
+                    <a href="<?= WEB_ROOT ?>/memberships/edit-plan.php?id=<?= $plan['plan_id'] ?>" 
                        onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Edit Plan'); return false; }"
                        class="btn btn-sm btn-white" style="width: auto; text-align: center; border: 1px solid #d1d5db;">
                         Edit Configuration

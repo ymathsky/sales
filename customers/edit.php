@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete'])) {
         Customer::delete($customerId, $companyId);
         setFlashMessage('Customer deleted successfully', 'success');
-        header('Location: /sales/customers/list.php?company=' . $companyId);
+        header('Location: <?= WEB_ROOT ?>/customers/list.php?company=' . $companyId);
         exit;
     }
     
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             Customer::update($customerId, $companyId, $formData);
             setFlashMessage('Customer updated successfully', 'success');
-            header('Location: /sales/customers/list.php?company=' . $companyId);
+            header('Location: <?= WEB_ROOT ?>/customers/list.php?company=' . $companyId);
             exit;
         } catch (Exception $e) {
             $errors[] = 'Error updating customer: ' . $e->getMessage();
@@ -100,7 +100,7 @@ include __DIR__ . '/../views/header.php';
         </div>
     </div>
     <div style="display: flex; gap: 12px;">
-        <a href="/sales/customers/list.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/customers/list.php?company=<?= $companyId ?>" 
            class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 10px 20px; display: flex; align-items: center; gap: 8px;">
             <svg style="width: 18px; height: 18px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Customers
@@ -263,7 +263,7 @@ include __DIR__ . '/../views/header.php';
             </button>
             
             <div style="display: flex; gap: 16px;">
-                <a href="/sales/customers/list.php?company=<?= $companyId ?>" class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 12px 24px;">Cancel</a>
+                <a href="<?= WEB_ROOT ?>/customers/list.php?company=<?= $companyId ?>" class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 12px 24px;">Cancel</a>
                 <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; padding: 12px 32px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4); transition: transform 0.1s;" onmousedown="this.style.transform='translateY(1px)'" onmouseup="this.style.transform='translateY(0)'">Update Customer</button>
             </div>
         </div>

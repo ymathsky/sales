@@ -9,7 +9,7 @@ require_once __DIR__ . '/../models/User.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    redirect('/sales/index.php');
+    redirect('<?= WEB_ROOT ?>/index.php');
 }
 
 $error = '';
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_role'] = $user['role'];
             
             // Redirect to intended page or dashboard
-            $redirect = $_GET['redirect'] ?? '/sales/index.php';
+            $redirect = $_GET['redirect'] ?? '<?= WEB_ROOT ?>/index.php';
             redirect($redirect);
         } else {
             $error = 'Invalid username or password';
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Cash Flow System</title>
-    <link rel="stylesheet" href="/sales/assets/css/style.css">
+    <link rel="stylesheet" href="<?= WEB_ROOT ?>/assets/css/style.css">
 </head>
 <body class="login-page">
     <div class="login-container">

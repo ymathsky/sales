@@ -36,7 +36,7 @@ include __DIR__ . '/../views/header.php';
     <div class="page-header">
         <h1>Companies</h1>
         <div>
-            <a href="/sales/companies/create.php" class="btn btn-primary">
+            <a href="<?= WEB_ROOT ?>/companies/create.php" class="btn btn-primary">
                 <svg style="width: 16px; height: 16px; margin-right: 5px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
@@ -92,8 +92,8 @@ include __DIR__ . '/../views/header.php';
                                 </span>
                             </td>
                             <td>
-                                <a href="/sales/companies/edit.php?id=<?= $company['company_id'] ?>" class="btn btn-sm btn-primary">Edit</a>
-                                <a href="/sales/index.php?company=<?= $company['company_id'] ?>" class="btn btn-sm btn-secondary">View Dashboard</a>
+                                <a href="<?= WEB_ROOT ?>/companies/edit.php?id=<?= $company['company_id'] ?>" class="btn btn-sm btn-primary">Edit</a>
+                                <a href="<?= WEB_ROOT ?>/index.php?company=<?= $company['company_id'] ?>" class="btn btn-sm btn-secondary">View Dashboard</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Membership::linkTransaction($membershipId, $transactionId);
         }
 
-        header("Location: /sales/transactions/receipt.php?id=$transactionId&company=$companyId");
+        header("Location: <?= WEB_ROOT ?>/transactions/receipt.php?id=$transactionId&company=$companyId");
         exit;
     } catch (Exception $e) {
         $error = $e->getMessage();

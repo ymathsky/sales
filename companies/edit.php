@@ -16,7 +16,7 @@ $companyId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $company = Company::getById($companyId);
 if (!$company) {
     $_SESSION['flash_message'] = 'Company not found';
-    header('Location: /sales/companies/list.php');
+    header('Location: <?= WEB_ROOT ?>/companies/list.php');
     exit;
 }
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             
             $_SESSION['flash_message'] = 'Company updated successfully';
-            header('Location: /sales/companies/list.php');
+            header('Location: <?= WEB_ROOT ?>/companies/list.php');
             exit;
         } catch (PDOException $e) {
             $errors[] = 'Database error: ' . $e->getMessage();
@@ -78,7 +78,7 @@ include __DIR__ . '/../views/header.php';
     <div class="page-header">
         <h1>Edit Company</h1>
         <div>
-            <a href="/sales/companies/list.php" class="btn btn-secondary">Back to Companies</a>
+            <a href="<?= WEB_ROOT ?>/companies/list.php" class="btn btn-secondary">Back to Companies</a>
         </div>
     </div>
 
@@ -128,7 +128,7 @@ include __DIR__ . '/../views/header.php';
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Update Company</button>
-                <a href="/sales/companies/list.php" class="btn btn-secondary">Cancel</a>
+                <a href="<?= WEB_ROOT ?>/companies/list.php" class="btn btn-secondary">Cancel</a>
                 <?php if ($transactionCount == 0 && count($assignedUsers) == 0): ?>
                     <button type="button" onclick="confirmDelete()" class="btn btn-danger" style="margin-left: auto;">Delete Company</button>
                 <?php endif; ?>
@@ -200,13 +200,13 @@ include __DIR__ . '/../views/header.php';
 <script>
 function confirmDelete() {
     if (confirm('Are you sure you want to delete this company? This action cannot be undone.')) {
-        window.location.href = '/sales/companies/delete.php?id=<?= $companyId ?>';
+        window.location.href = '<?= WEB_ROOT ?>/companies/delete.php?id=<?= $companyId ?>';
     }
 }
 
 function removeUserAccess(userId) {
     if (confirm('Remove this user\'s access to the company?')) {
-        window.location.href = '/sales/companies/remove-user.php?company_id=<?= $companyId ?>&user_id=' + userId;
+        window.location.href = '<?= WEB_ROOT ?>/companies/remove-user.php?company_id=<?= $companyId ?>&user_id=' + userId;
     }
 }
 </script>

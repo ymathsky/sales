@@ -19,7 +19,7 @@ $category = Category::getById($categoryId);
 
 if (!$category) {
     setFlashMessage('Category not found', 'error');
-    header('Location: /sales/categories/list.php');
+    header('Location: <?= WEB_ROOT ?>/categories/list.php');
     exit;
 }
 
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             Category::update($categoryId, $formData);
             setFlashMessage('Category updated successfully', 'success');
-            header('Location: /sales/categories/list.php');
+            header('Location: <?= WEB_ROOT ?>/categories/list.php');
             exit;
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
@@ -74,11 +74,11 @@ include __DIR__ . '/../views/header.php';
     </h1>
     <div>
         <?php if ($usageCount == 0): ?>
-            <a href="/sales/categories/delete.php?id=<?= $categoryId ?>" 
+            <a href="<?= WEB_ROOT ?>/categories/delete.php?id=<?= $categoryId ?>" 
                class="btn btn-danger"
                onclick="return confirm('Delete this category?')">Delete Category</a>
         <?php endif; ?>
-        <a href="/sales/categories/list.php" class="btn btn-secondary">← Back to Categories</a>
+        <a href="<?= WEB_ROOT ?>/categories/list.php" class="btn btn-secondary">← Back to Categories</a>
     </div>
 </div>
 
@@ -148,7 +148,7 @@ include __DIR__ . '/../views/header.php';
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Update Category</button>
-            <a href="/sales/categories/list.php" class="btn btn-secondary">Cancel</a>
+            <a href="<?= WEB_ROOT ?>/categories/list.php" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

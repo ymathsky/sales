@@ -298,7 +298,7 @@ if (!$sale) {
         </div>
     </div>
     
-    <script src="/sales/assets/js/notifications.js"></script>
+    <script src="<?= WEB_ROOT ?>/assets/js/notifications.js"></script>
     <script>
         // Show success notification
         document.addEventListener('DOMContentLoaded', function() {

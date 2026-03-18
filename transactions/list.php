@@ -52,7 +52,7 @@ include __DIR__ . '/../views/header.php';
 <div class="page-header no-print" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 24px;">
     <h1 style="color: white; margin: 0 0 16px 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Transactions - <?= htmlspecialchars($company['name']) ?></h1>
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-        <a href="/sales/transactions/export.php?company=<?= $companyId ?><?= !empty($_GET['type']) ? '&type=' . urlencode($_GET['type']) : '' ?><?= !empty($_GET['account']) ? '&account=' . urlencode($_GET['account']) : '' ?><?= !empty($_GET['start_date']) ? '&start_date=' . urlencode($_GET['start_date']) : '' ?><?= !empty($_GET['end_date']) ? '&end_date=' . urlencode($_GET['end_date']) : '' ?><?= !empty($_GET['category']) ? '&category=' . urlencode($_GET['category']) : '' ?><?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" 
+        <a href="<?= WEB_ROOT ?>/transactions/export.php?company=<?= $companyId ?><?= !empty($_GET['type']) ? '&type=' . urlencode($_GET['type']) : '' ?><?= !empty($_GET['account']) ? '&account=' . urlencode($_GET['account']) : '' ?><?= !empty($_GET['start_date']) ? '&start_date=' . urlencode($_GET['start_date']) : '' ?><?= !empty($_GET['end_date']) ? '&end_date=' . urlencode($_GET['end_date']) : '' ?><?= !empty($_GET['category']) ? '&category=' . urlencode($_GET['category']) : '' ?><?= !empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '' ?>" 
            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(16,185,129,0.3); transition: all 0.3s; border: none;" 
            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16,185,129,0.4)';" 
            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16,185,129,0.3)';">
@@ -70,7 +70,7 @@ include __DIR__ . '/../views/header.php';
             </svg>
             Print
         </button>
-        <a href="/sales/transactions/create.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/transactions/create.php?company=<?= $companyId ?>" 
            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(16,185,129,0.3); transition: all 0.3s;" 
            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16,185,129,0.4)';" 
            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16,185,129,0.3)';">
@@ -79,7 +79,7 @@ include __DIR__ . '/../views/header.php';
             </svg>
             Add Transaction
         </a>
-        <a href="/sales/index.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/index.php?company=<?= $companyId ?>" 
            style="background: rgba(255,255,255,0.2); color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px); transition: all 0.3s;" 
            onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)';" 
            onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)';">
@@ -335,10 +335,10 @@ $bankBal = $bankBalanceData['book_balance'];
                     <td><?= htmlspecialchars($trans['created_by_name'] ?? 'Unknown') ?></td>
                     <td>
                         <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                            <a href="/sales/transactions/edit.php?id=<?= $trans['transaction_id'] ?>&company=<?= $companyId ?>" 
+                            <a href="<?= WEB_ROOT ?>/transactions/edit.php?id=<?= $trans['transaction_id'] ?>&company=<?= $companyId ?>" 
                                class="btn btn-sm">Edit</a>
                             <?php if ($hasMultipleCompanies): ?>
-                                <a href="/sales/transactions/move.php?id=<?= $trans['transaction_id'] ?>&company=<?= $companyId ?>" 
+                                <a href="<?= WEB_ROOT ?>/transactions/move.php?id=<?= $trans['transaction_id'] ?>&company=<?= $companyId ?>" 
                                    class="btn btn-sm" 
                                    style="background: #8b5cf6; color: white; border: none;"
                                    onmouseover="this.style.background='#7c3aed'"
@@ -420,7 +420,7 @@ $bankBal = $bankBalanceData['book_balance'];
 <?php else: ?>
     <div class="empty-state">
         <p>No transactions found.</p>
-        <a href="/sales/transactions/create.php?company=<?= $companyId ?>" class="btn btn-primary">Add Transaction</a>
+        <a href="<?= WEB_ROOT ?>/transactions/create.php?company=<?= $companyId ?>" class="btn btn-primary">Add Transaction</a>
     </div>
 <?php endif; ?>
 
@@ -480,7 +480,7 @@ function viewTransactionReceipts(transactionId) {
     document.body.style.overflow = 'hidden';
     
     // Fetch receipts via AJAX
-    fetch(`/sales/api/get-receipts.php?transaction_id=${transactionId}`)
+    fetch(`<?= WEB_ROOT ?>/api/get-receipts.php?transaction_id=${transactionId}`)
         .then(response => response.json())
         .then(data => {
             loader.style.display = 'none';
@@ -506,7 +506,7 @@ function displayCurrentReceipt() {
     const nav = document.getElementById('receiptNav');
     const download = document.getElementById('receiptDownload');
     
-    const fullPath = '/sales/' + receipt.file_path;
+    const fullPath = '<?= WEB_ROOT ?>/' + receipt.file_path;
     const isPdf = receipt.file_path.toLowerCase().endsWith('.pdf');
     const displayName = receipt.original_name || receipt.file_path.split('/').pop();
     

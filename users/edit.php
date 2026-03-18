@@ -213,7 +213,7 @@ include __DIR__ . '/../views/header.php';
                 <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 14px;">Update user details, access and permissions.</p>
             </div>
             <div>
-                <button onclick="window.openNewTab ? window.openNewTab('/sales/users/list.php', 'Users') : window.location.href='/sales/users/list.php'" class="btn" style="background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <button onclick="window.openNewTab ? window.openNewTab('<?= WEB_ROOT ?>/users/list.php', 'Users') : window.location.href='<?= WEB_ROOT ?>/users/list.php'" class="btn" style="background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
                     <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>

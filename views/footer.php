@@ -4,9 +4,9 @@
     </div>
     <?php if (isLoggedIn()): ?>
     <?php $v = '1.0'; // Static version to prevent unnecessary reloading ?>
-    <script src="/sales/assets/js/notifications.js?v=<?= $v ?>"></script>
-    <script src="/sales/assets/js/main.js?v=<?= $v ?>"></script>
-    <script src="/sales/assets/js/company-switcher.js?v=<?= $v ?>"></script>
+    <script src="<?= WEB_ROOT ?>/assets/js/notifications.js?v=<?= $v ?>"></script>
+    <script src="<?= WEB_ROOT ?>/assets/js/main.js?v=<?= $v ?>"></script>
+    <script src="<?= WEB_ROOT ?>/assets/js/company-switcher.js?v=<?= $v ?>"></script>
     
     <?php if (hasFlashMessage()): ?>
     <script>

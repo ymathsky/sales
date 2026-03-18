@@ -98,7 +98,7 @@ include __DIR__ . '/../views/header.php';
             </svg>
             Print
         </button>
-        <a href="/sales/invoices/list.php?company=<?= $companyId ?>" class="btn btn-primary">← Back to Invoices</a>
+        <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-primary">← Back to Invoices</a>
     </div>
 </div>
 
@@ -277,7 +277,7 @@ include __DIR__ . '/../views/header.php';
                 Mark as Sent
             </button>
         </form>
-        <a href="/sales/invoices/edit.php?id=<?= $invoiceId ?>&company=<?= $companyId ?>" class="btn btn-secondary">
+        <a href="<?= WEB_ROOT ?>/invoices/edit.php?id=<?= $invoiceId ?>&company=<?= $companyId ?>" class="btn btn-secondary">
             Edit Invoice
         </a>
     <?php endif; ?>

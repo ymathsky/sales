@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
             // Using setFlashMessage would require updating list.php to use getFlashMessage
             $_SESSION['flash_message'] = 'Company created successfully';
-            header('Location: /sales/companies/list.php');
+            header('Location: <?= WEB_ROOT ?>/companies/list.php');
             exit;
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
@@ -59,7 +59,7 @@ include __DIR__ . '/../views/header.php';
     <div class="page-header">
         <h1>Create New Company</h1>
         <div>
-            <a href="/sales/companies/list.php" class="btn btn-secondary">Back to Companies</a>
+            <a href="<?= WEB_ROOT ?>/companies/list.php" class="btn btn-secondary">Back to Companies</a>
         </div>
     </div>
 
@@ -109,7 +109,7 @@ include __DIR__ . '/../views/header.php';
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Create Company</button>
-                <a href="/sales/companies/list.php" class="btn btn-secondary">Cancel</a>
+                <a href="<?= WEB_ROOT ?>/companies/list.php" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

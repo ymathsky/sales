@@ -40,7 +40,7 @@ include __DIR__ . '/../views/header.php';
                 <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 14px;">Manage system access and permissions.</p>
             </div>
             <div>
-                <button onclick="window.openNewTab ? window.openNewTab('/sales/users/create.php', 'Create User') : window.location.href='/sales/users/create.php'" class="btn" style="background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <button onclick="window.openNewTab ? window.openNewTab('<?= WEB_ROOT ?>/users/create.php', 'Create User') : window.location.href='<?= WEB_ROOT ?>/users/create.php'" class="btn" style="background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
                     <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
@@ -112,7 +112,7 @@ include __DIR__ . '/../views/header.php';
                                     <?= $user['last_login'] ? date('M d, Y H:i', strtotime($user['last_login'])) : '<span style="color: #9ca3af;">Never</span>' ?>
                                 </td>
                                 <td style="padding: 16px; text-align: right;">
-                                    <button onclick="window.openNewTab ? window.openNewTab('/sales/users/edit.php?id=<?= $user['user_id'] ?>', 'Edit User') : window.location.href='/sales/users/edit.php?id=<?= $user['user_id'] ?>'" 
+                                    <button onclick="window.openNewTab ? window.openNewTab('<?= WEB_ROOT ?>/users/edit.php?id=<?= $user['user_id'] ?>', 'Edit User') : window.location.href='<?= WEB_ROOT ?>/users/edit.php?id=<?= $user['user_id'] ?>'" 
                                             class="btn" style="padding: 6px 14px; font-size: 13px; background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; border-radius: 6px; font-weight: 500; transition: all 0.2s; white-space: nowrap;"
                                             onmouseover="this.style.background='#3b82f6'; this.style.color='white';"
                                             onmouseout="this.style.background='#eff6ff'; this.style.color='#3b82f6';">

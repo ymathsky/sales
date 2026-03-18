@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $categoryId = Category::create($formData);
             setFlashMessage('Category created successfully', 'success');
-            header('Location: /sales/categories/list.php');
+            header('Location: <?= WEB_ROOT ?>/categories/list.php');
             exit;
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
@@ -69,7 +69,7 @@ include __DIR__ . '/../views/header.php';
         </svg>
         Add Category
     </h1>
-    <a href="/sales/categories/list.php" class="btn btn-secondary">← Back to Categories</a>
+    <a href="<?= WEB_ROOT ?>/categories/list.php" class="btn btn-secondary">← Back to Categories</a>
 </div>
 
 <?php if (!empty($errors)): ?>
@@ -131,7 +131,7 @@ include __DIR__ . '/../views/header.php';
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Category</button>
-            <a href="/sales/categories/list.php" class="btn btn-secondary">Cancel</a>
+            <a href="<?= WEB_ROOT ?>/categories/list.php" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

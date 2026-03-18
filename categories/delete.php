@@ -15,7 +15,7 @@ $category = Category::getById($categoryId);
 
 if (!$category) {
     setFlashMessage('Category not found', 'error');
-    header('Location: /sales/categories/list.php');
+    header('Location: <?= WEB_ROOT ?>/categories/list.php');
     exit;
 }
 
@@ -23,7 +23,7 @@ if (!$category) {
 $usageCount = Category::getUsageCount($categoryId);
 if ($usageCount > 0) {
     setFlashMessage("Cannot delete category '{$category['name']}'. It is being used in {$usageCount} transaction(s).", 'error');
-    header('Location: /sales/categories/list.php');
+    header('Location: <?= WEB_ROOT ?>/categories/list.php');
     exit;
 }
 
@@ -35,5 +35,5 @@ try {
     setFlashMessage('Error deleting category: ' . $e->getMessage(), 'error');
 }
 
-header('Location: /sales/categories/list.php');
+header('Location: <?= WEB_ROOT ?>/categories/list.php');
 exit;

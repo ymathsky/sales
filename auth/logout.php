@@ -10,4 +10,4 @@ require_once __DIR__ . '/../includes/functions.php';
 session_destroy();
 
 // Redirect to login
-redirect('/sales/auth/login.php');
+redirect('<?= WEB_ROOT ?>/auth/login.php');

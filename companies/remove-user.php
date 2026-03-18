@@ -13,7 +13,7 @@ $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
 
 if (!$companyId || !$userId) {
     $_SESSION['flash_message'] = 'Invalid parameters';
-    header('Location: /sales/companies/list.php');
+    header('Location: <?= WEB_ROOT ?>/companies/list.php');
     exit;
 }
 
@@ -27,5 +27,5 @@ try {
     $_SESSION['flash_message'] = 'Error removing user access: ' . $e->getMessage();
 }
 
-header('Location: /sales/companies/edit.php?id=' . $companyId);
+header('Location: <?= WEB_ROOT ?>/companies/edit.php?id=' . $companyId);
 exit;

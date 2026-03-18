@@ -57,8 +57,8 @@ include __DIR__ . '/../views/header.php';
         Invoices - <?= htmlspecialchars($company['name']) ?>
     </h1>
     <div>
-        <a href="/sales/invoices/create.php?company=<?= $companyId ?>" class="btn btn-success">+ New Invoice</a>
-        <a href="/sales/ar/dashboard.php?company=<?= $companyId ?>" class="btn btn-primary">AR Dashboard</a>
+        <a href="<?= WEB_ROOT ?>/invoices/create.php?company=<?= $companyId ?>" class="btn btn-success">+ New Invoice</a>
+        <a href="<?= WEB_ROOT ?>/ar/dashboard.php?company=<?= $companyId ?>" class="btn btn-primary">AR Dashboard</a>
     </div>
 </div>
 
@@ -95,7 +95,7 @@ include __DIR__ . '/../views/header.php';
         <div style="display: flex; gap: 10px;">
             <button type="submit" class="btn btn-primary">Filter</button>
             <?php if ($statusFilter || $customerFilter): ?>
-                <a href="/sales/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">Clear</a>
+                <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">Clear</a>
             <?php endif; ?>
         </div>
     </form>
@@ -138,7 +138,7 @@ include __DIR__ . '/../views/header.php';
             <?php foreach ($invoices as $inv): ?>
                 <tr>
                     <td style="font-weight: 600;">
-                        <a href="/sales/invoices/view.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/invoices/view.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
                            style="color: var(--primary-color); text-decoration: none;">
                             <?= htmlspecialchars($inv['invoice_number']) ?>
                         </a>
@@ -176,10 +176,10 @@ include __DIR__ . '/../views/header.php';
                         <span class="badge badge-<?= $badgeClass ?>"><?= ucfirst($inv['status']) ?></span>
                     </td>
                     <td class="actions">
-                        <a href="/sales/invoices/view.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/invoices/view.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
                            class="btn btn-sm btn-primary">View</a>
                         <?php if ($inv['status'] == 'draft'): ?>
-                            <a href="/sales/invoices/edit.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
+                            <a href="<?= WEB_ROOT ?>/invoices/edit.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
                                class="btn btn-sm btn-secondary">Edit</a>
                         <?php endif; ?>
                     </td>
@@ -195,7 +195,7 @@ include __DIR__ . '/../views/header.php';
         </svg>
         <h3>No invoices found</h3>
         <p>Get started by creating your first invoice.</p>
-        <a href="/sales/invoices/create.php?company=<?= $companyId ?>" class="btn btn-success">+ Create Invoice</a>
+        <a href="<?= WEB_ROOT ?>/invoices/create.php?company=<?= $companyId ?>" class="btn btn-success">+ Create Invoice</a>
     </div>
 <?php endif; ?>
 

@@ -115,7 +115,7 @@ include __DIR__ . '/../views/header.php';
         </div>
     </div>
     <div>
-        <a href="/sales/reconciliation/opening-balance.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/reconciliation/opening-balance.php?company=<?= $companyId ?>" 
            onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Opening Balance'); return false; }"
            class="btn btn-white"
            style="background: white; border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 10px 20px; border-radius: 8px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); display: flex; align-items: center; gap: 8px; transition: all 0.2s;">

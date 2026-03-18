@@ -252,13 +252,13 @@ include __DIR__ . '/views/header.php';
                         <h3>🔧 Quick Actions</h3>
                     </div>
                     <div class="recon-actions">
-                        <a href="/sales/reconciliation/index.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Bank Reconciliation'); return false; }" class="btn btn-primary">
+                        <a href="<?= WEB_ROOT ?>/reconciliation/index.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Bank Reconciliation'); return false; }" class="btn btn-primary">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="vertical-align:-3px;margin-right:5px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                             </svg>
                             Bank Reconciliation
                         </a>
-                        <a href="/sales/reconciliation/opening-balance.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Opening Balance'); return false; }" class="btn btn-outline">
+                        <a href="<?= WEB_ROOT ?>/reconciliation/opening-balance.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Opening Balance'); return false; }" class="btn btn-outline">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="vertical-align:-3px;margin-right:5px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -272,23 +272,23 @@ include __DIR__ . '/views/header.php';
         <div class="actions-bar">
             <h2>Recent Transactions</h2>
             <div class="quick-actions">
-                <a href="/sales/pos/index.php?company=<?= $currentCompanyId ?>" target="_blank"
+                <a href="<?= WEB_ROOT ?>/pos/index.php?company=<?= $currentCompanyId ?>" target="_blank"
                    class="btn btn-success" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="display:inline;vertical-align:middle;margin-right:5px;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                     Point of Sale
                 </a>
-                <a href="/sales/transactions/create.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Add Transaction'); return false; }"
+                <a href="<?= WEB_ROOT ?>/transactions/create.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Add Transaction'); return false; }"
                    class="btn btn-success">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="display:inline;vertical-align:middle;margin-right:5px;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Add Transaction
                 </a>
-                <a href="/sales/transactions/list.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'All Transactions'); return false; }"
+                <a href="<?= WEB_ROOT ?>/transactions/list.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'All Transactions'); return false; }"
                    class="btn btn-primary">View All</a>
-                <a href="/sales/reports/index.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Reports'); return false; }"
+                <a href="<?= WEB_ROOT ?>/reports/index.php?company=<?= $currentCompanyId ?>" onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Reports'); return false; }"
                    class="btn btn-secondary">Reports</a>
             </div>
         </div>
@@ -317,7 +317,7 @@ include __DIR__ . '/views/header.php';
                                 <?= formatMoney($trans['amount']) ?>
                             </td>
                             <td>
-                                <a href="/sales/transactions/edit.php?id=<?= $trans['transaction_id'] ?>&company=<?= $currentCompanyId ?>" 
+                                <a href="<?= WEB_ROOT ?>/transactions/edit.php?id=<?= $trans['transaction_id'] ?>&company=<?= $currentCompanyId ?>" 
                                    class="btn btn-sm">Edit</a>
                                 <button onclick="if(confirm('Are you sure you want to delete this transaction?')) window.location.href='?company=<?= $currentCompanyId ?>&delete=<?= $trans['transaction_id'] ?>'" 
                                         class="btn btn-sm btn-danger" 
@@ -331,7 +331,7 @@ include __DIR__ . '/views/header.php';
         <?php else: ?>
             <div class="empty-state">
                 <p>No transactions found for this period.</p>
-                <a href="/sales/transactions/create.php?company=<?= $currentCompanyId ?>" 
+                <a href="<?= WEB_ROOT ?>/transactions/create.php?company=<?= $currentCompanyId ?>" 
                    class="btn btn-primary">Add Your First Transaction</a>
             </div>
         <?php endif; ?>

@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $showForm) {
         try {
             $transactionId = Transaction::create($formData);
             setFlashMessage('✓ Transaction created successfully! Amount: ₱' . number_format($formData['amount'], 2), 'success');
-            redirect("/sales/transactions/list.php?company={$companyId}");
+            redirect("<?= WEB_ROOT ?>/transactions/list.php?company={$companyId}");
         } catch (Exception $e) {
             $errors[] = 'Failed to create transaction: ' . $e->getMessage();
         }
@@ -157,12 +157,12 @@ include __DIR__ . '/../views/header.php';
         <div>
             <?php if ($showForm): ?>
                 <?php if (isset($_GET['from']) && $_GET['from'] === 'fund-transfers'): ?>
-                    <a href="/sales/reconciliation/fund-transfers.php?company=<?= $companyId ?>" class="btn btn-secondary">← Back to Fund Transfers</a>
+                    <a href="<?= WEB_ROOT ?>/reconciliation/fund-transfers.php?company=<?= $companyId ?>" class="btn btn-secondary">← Back to Fund Transfers</a>
                 <?php else: ?>
-                    <a href="/sales/transactions/create.php" class="btn btn-secondary">Change Company</a>
+                    <a href="<?= WEB_ROOT ?>/transactions/create.php" class="btn btn-secondary">Change Company</a>
                 <?php endif; ?>
             <?php else: ?>
-                <a href="/sales/index.php" class="btn btn-secondary">Back to Dashboard</a>
+                <a href="<?= WEB_ROOT ?>/index.php" class="btn btn-secondary">Back to Dashboard</a>
             <?php endif; ?>
         </div>
     </div>
@@ -196,7 +196,7 @@ include __DIR__ . '/../views/header.php';
                     </svg>
                     <p>You don't have access to any companies yet.</p>
                     <?php if (getCurrentUserRole() === 'admin'): ?>
-                        <a href="/sales/companies/create.php" class="btn btn-primary">Create Company</a>
+                        <a href="<?= WEB_ROOT ?>/companies/create.php" class="btn btn-primary">Create Company</a>
                     <?php else: ?>
                         <p style="font-size: 0.9rem; color: var(--text-light);">Please contact your administrator to grant you access.</p>
                     <?php endif; ?>
@@ -204,7 +204,7 @@ include __DIR__ . '/../views/header.php';
             <?php else: ?>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
                     <?php foreach ($userCompanies as $comp): ?>
-                        <a href="/sales/transactions/create.php?company=<?= $comp['company_id'] ?>" 
+                        <a href="<?= WEB_ROOT ?>/transactions/create.php?company=<?= $comp['company_id'] ?>" 
                            class="company-card" style="text-decoration: none; display: block;">
                             <div style="background: white; border: 2px solid var(--border-color); border-radius: 12px; padding: 25px; transition: all 0.3s; cursor: pointer; height: 100%;"
                                  onmouseover="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.2)'; this.style.transform='translateY(-4px)';"
@@ -468,7 +468,7 @@ include __DIR__ . '/../views/header.php';
                     </svg>
                     Save Transaction
                 </button>
-                <a href="/sales/transactions/create.php" class="btn btn-secondary">Cancel</a>
+                <a href="<?= WEB_ROOT ?>/transactions/create.php" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

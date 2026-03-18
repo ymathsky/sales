@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->commit();
             $success = true;
             $_SESSION['flash_message'] = 'User created successfully';
-            header('Location: /sales/users/list.php');
+            header('Location: <?= WEB_ROOT ?>/users/list.php');
             exit;
         } catch (PDOException $e) {
             $pdo->rollBack();
@@ -138,7 +138,7 @@ include __DIR__ . '/../views/header.php';
                 <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 14px;">Add a new user to the system and assign permissions.</p>
             </div>
             <div>
-                <a href="/sales/users/list.php" class="btn" style="background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);">
+                <a href="<?= WEB_ROOT ?>/users/list.php" class="btn" style="background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);">
                     <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>

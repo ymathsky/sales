@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $invoiceId = Invoice::create($data, $items);
         
         if ($invoiceId) {
-            header('Location: /sales/invoices/view.php?id=' . $invoiceId . '&company=' . $companyId . '&created=1');
+            header('Location: <?= WEB_ROOT ?>/invoices/view.php?id=' . $invoiceId . '&company=' . $companyId . '&created=1');
             exit;
         } else {
             $errors[] = 'Failed to create invoice. Please try again.';
@@ -101,7 +101,7 @@ include __DIR__ . '/../views/header.php';
         Create Invoice - <?= htmlspecialchars($company['name']) ?>
     </h1>
     <div>
-        <a href="/sales/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">← Back to Invoices</a>
+        <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">← Back to Invoices</a>
     </div>
 </div>
 
@@ -120,7 +120,7 @@ include __DIR__ . '/../views/header.php';
     <div class="alert alert-warning">
         <strong>No customers found.</strong><br>
         You need to create at least one customer before creating an invoice.
-        <a href="/sales/customers/create.php?company=<?= $companyId ?>" class="btn btn-sm btn-primary" style="margin-left: 10px;">+ Create Customer</a>
+        <a href="<?= WEB_ROOT ?>/customers/create.php?company=<?= $companyId ?>" class="btn btn-sm btn-primary" style="margin-left: 10px;">+ Create Customer</a>
     </div>
 <?php else: ?>
 
@@ -226,7 +226,7 @@ include __DIR__ . '/../views/header.php';
     </div>
     
     <div style="display: flex; gap: 15px; justify-content: flex-end;">
-        <a href="/sales/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">Cancel</a>
+        <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">Cancel</a>
         <button type="submit" class="btn btn-success">Create Invoice</button>
     </div>
 </form>

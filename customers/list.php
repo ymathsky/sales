@@ -29,9 +29,9 @@ include __DIR__ . '/../views/header.php';
         Clients - <?= htmlspecialchars($company['name']) ?>
     </h1>
     <div>
-        <a href="/sales/customers/create.php?company=<?= $companyId ?>" class="btn btn-success">+ Add Client</a>
-        <a href="/sales/ar/dashboard.php?company=<?= $companyId ?>" class="btn btn-primary">AR Dashboard</a>
-        <a href="/sales/index.php?company=<?= $companyId ?>" class="btn btn-secondary">← Dashboard</a>
+        <a href="<?= WEB_ROOT ?>/customers/create.php?company=<?= $companyId ?>" class="btn btn-success">+ Add Client</a>
+        <a href="<?= WEB_ROOT ?>/ar/dashboard.php?company=<?= $companyId ?>" class="btn btn-primary">AR Dashboard</a>
+        <a href="<?= WEB_ROOT ?>/index.php?company=<?= $companyId ?>" class="btn btn-secondary">← Dashboard</a>
     </div>
 </div>
 
@@ -55,7 +55,7 @@ include __DIR__ . '/../views/header.php';
             <?php foreach ($customers as $customer): ?>
                 <tr>
                     <td style="font-weight: 600;">
-                        <a href="/sales/customers/view.php?id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/customers/view.php?id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
                            style="color: var(--primary-color); text-decoration: none;">
                             <?= htmlspecialchars($customer['customer_name']) ?>
                         </a>
@@ -76,11 +76,11 @@ include __DIR__ . '/../views/header.php';
                         <?php endif; ?>
                     </td>
                     <td>
-                        <a href="/sales/customers/edit.php?id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/customers/edit.php?id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
                            class="btn btn-sm btn-primary">Edit</a>
-                        <a href="/sales/invoices/create.php?customer_id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/invoices/create.php?customer_id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
                            class="btn btn-sm btn-success">+ Invoice</a>
-                        <a href="/sales/customers/delete.php?id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/customers/delete.php?id=<?= $customer['customer_id'] ?>&company=<?= $companyId ?>" 
                            class="btn btn-sm btn-danger"
                            onclick="return confirm('Are you sure you want to delete this client? This action cannot be undone.');">Delete</a>
                     </td>
@@ -92,7 +92,7 @@ include __DIR__ . '/../views/header.php';
 <?php else: ?>
     <div class="empty-state">
         <p>No clients found.</p>
-        <a href="/sales/customers/create.php?company=<?= $companyId ?>" class="btn btn-primary">Add First Client</a>
+        <a href="<?= WEB_ROOT ?>/customers/create.php?company=<?= $companyId ?>" class="btn btn-primary">Add First Client</a>
     </div>
 <?php endif; ?>
 

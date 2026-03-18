@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $customerId = Customer::create($formData);
             setFlashMessage('Customer created successfully', 'success');
-            header('Location: /sales/customers/list.php?company=' . $companyId);
+            header('Location: <?= WEB_ROOT ?>/customers/list.php?company=' . $companyId);
             exit;
         } catch (Exception $e) {
             $errors[] = 'Error creating customer: ' . $e->getMessage();
@@ -83,7 +83,7 @@ include __DIR__ . '/../views/header.php';
         </div>
     </div>
     <div>
-        <a href="/sales/customers/list.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/customers/list.php?company=<?= $companyId ?>" 
            class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 10px 20px; display: flex; align-items: center; gap: 8px;">
             <svg style="width: 18px; height: 18px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Customers
@@ -234,7 +234,7 @@ include __DIR__ . '/../views/header.php';
         
         <div class="form-actions" style="display: flex; gap: 16px; border-top: 1px solid #e5e7eb; padding-top: 32px;">
             <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; padding: 12px 32px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4); transition: transform 0.1s;" onmousedown="this.style.transform='translateY(1px)'" onmouseup="this.style.transform='translateY(0)'">Create Customer</button>
-            <a href="/sales/customers/list.php?company=<?= $companyId ?>" class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 12px 24px;">Cancel</a>
+            <a href="<?= WEB_ROOT ?>/customers/list.php?company=<?= $companyId ?>" class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 12px 24px;">Cancel</a>
         </div>
     </form>
 </div>

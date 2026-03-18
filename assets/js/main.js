@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Only intercept internal links
             const href = this.getAttribute('href');
-            if (href && href.startsWith('/sales/') && typeof openNewTab === 'function') {
+            if (href && href.startsWith('<?= WEB_ROOT ?>/') && typeof openNewTab === 'function') {
                 e.preventDefault();
                 const title = this.textContent.trim();
                 openNewTab(href, title);

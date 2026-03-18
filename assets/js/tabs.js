@@ -412,7 +412,7 @@ function closeTab(tabId) {
     
     // If no tabs left, open dashboard
     if (window.tabs.length === 0) {
-        openNewTab('/sales/index.php', 'Dashboard');
+        openNewTab('<?= WEB_ROOT ?>/index.php', 'Dashboard');
     } else {
         saveTabs(); // Save after closing tab
     }
@@ -446,7 +446,7 @@ if (typeof window.switchCompany === 'undefined') {
             }
         });
         saveTabs();
-        window.location.href = '/sales/index.php?company=' + companyId;
+        window.location.href = '<?= WEB_ROOT ?>/index.php?company=' + companyId;
     }
 }
 

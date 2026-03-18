@@ -169,9 +169,9 @@ if (!$transaction) {
         <button onclick="window.print()" class="btn btn-print">🖨️ Print Receipt</button>
         <?php
         // Determine where to go back based on transaction type
-        $backUrl = '/sales/transactions/list.php?company=' . $companyId;
+        $backUrl = '<?= WEB_ROOT ?>/transactions/list.php?company=' . $companyId;
         if (strpos($transaction['category'], 'Subscription') !== false || strpos($transaction['description'], 'Subscription') !== false) {
-            $backUrl = '/sales/memberships/list.php?company=' . $companyId;
+            $backUrl = '<?= WEB_ROOT ?>/memberships/list.php?company=' . $companyId;
         }
         ?>
         <a href="<?= $backUrl ?>" class="btn btn-secondary">← Go Back</a>

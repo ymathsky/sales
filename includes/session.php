@@ -23,7 +23,7 @@ function isLoggedIn() {
  */
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: /sales/auth/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+        header('Location: <?= WEB_ROOT ?>/auth/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
         exit;
     }
 }

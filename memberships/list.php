@@ -40,14 +40,14 @@ include __DIR__ . '/../views/header.php';
     </div>
     <div style="display: flex; gap: 12px;">
         <?php if (function_exists('hasPermission') && hasPermission('membership_manage')): ?>
-        <a href="/sales/memberships/plans.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/memberships/plans.php?company=<?= $companyId ?>" 
            onclick="if(window.openNewTab) { window.openNewTab(this.href, 'Manage Plans'); return false; }" 
            class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 600; padding: 10px 20px; display: flex; align-items: center; gap: 8px;">
             <svg style="width: 18px; height: 18px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             Manage Plans
         </a>
         <?php endif; ?>
-        <a href="/sales/memberships/assign.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/memberships/assign.php?company=<?= $companyId ?>" 
            onclick="if(window.openNewTab) { window.openNewTab(this.href, 'New Subscription'); return false; }" 
            class="btn btn-primary"
            style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border: none; padding: 10px 24px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.3);">
@@ -149,7 +149,7 @@ include __DIR__ . '/../views/header.php';
                             </div>
                             <h3 style="color: #374151; font-weight: 600; margin: 0 0 8px 0;">No Active Memberships</h3>
                             <p style="margin: 0; font-size: 14px; max-width: 300px; margin: 0 auto;">Get started by assigning a subscription plan to one of your customers.</p>
-                            <a href="/sales/memberships/assign.php?company=<?= $companyId ?>" class="btn btn-primary" style="margin-top: 16px; display: inline-block;">Assign First Membership</a>
+                            <a href="<?= WEB_ROOT ?>/memberships/assign.php?company=<?= $companyId ?>" class="btn btn-primary" style="margin-top: 16px; display: inline-block;">Assign First Membership</a>
                         </td>
                     </tr>
                 <?php else: ?>
@@ -203,7 +203,7 @@ include __DIR__ . '/../views/header.php';
                             <td style="padding: 16px 24px; text-align: right;">
                                 <div style="display: inline-flex; gap: 8px;">
                                     <?php if (!empty($sub['transaction_id'])): ?>
-                                    <a href="/sales/transactions/receipt.php?id=<?= $sub['transaction_id'] ?>&company=<?= $companyId ?>" target="_blank" style="padding: 6px; hover:bg-gray-50; border-radius: 6px; color: #6b7280; text-decoration: none;" title="Print Receipt">
+                                    <a href="<?= WEB_ROOT ?>/transactions/receipt.php?id=<?= $sub['transaction_id'] ?>&company=<?= $companyId ?>" target="_blank" style="padding: 6px; hover:bg-gray-50; border-radius: 6px; color: #6b7280; text-decoration: none;" title="Print Receipt">
                                         <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                     </a>
                                     <?php endif; ?>

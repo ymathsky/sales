@@ -2,7 +2,7 @@
 /**
  * Diagnostic Script for Upload Issues
  * Run this file in your browser to check upload directory permissions
- * URL: http://yoursite.com/sales/check-uploads.php
+ * URL: http://yoursite.com<?= WEB_ROOT ?>/check-uploads.php
  */
 
 // Security: Only allow admin access (uncomment if you want to restrict)

@@ -97,22 +97,22 @@
         </div>
 
         <div class="test-grid">
-            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1')">
+            <button class="test-btn" onclick="testUrl('<?= WEB_ROOT ?>/transactions/list.php?company=1')">
                 📄 Transactions (same URL)
             </button>
-            <button class="test-btn" onclick="testUrl('/sales/invoices/list.php?company=1')">
+            <button class="test-btn" onclick="testUrl('<?= WEB_ROOT ?>/invoices/list.php?company=1')">
                 🧾 Invoices (same URL)
             </button>
-            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1&filter=all')">
+            <button class="test-btn" onclick="testUrl('<?= WEB_ROOT ?>/transactions/list.php?company=1&filter=all')">
                 📋 Transactions + Filter
             </button>
-            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?filter=all&company=1')">
+            <button class="test-btn" onclick="testUrl('<?= WEB_ROOT ?>/transactions/list.php?filter=all&company=1')">
                 📋 Same (different order)
             </button>
-            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1/')">
+            <button class="test-btn" onclick="testUrl('<?= WEB_ROOT ?>/transactions/list.php?company=1/')">
                 📄 With trailing slash
             </button>
-            <button class="test-btn" onclick="testUrl('/sales/transactions/list.php?company=1')">
+            <button class="test-btn" onclick="testUrl('<?= WEB_ROOT ?>/transactions/list.php?company=1')">
                 📄 Without trailing slash
             </button>
         </div>

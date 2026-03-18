@@ -34,14 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete'])) {
         Transaction::delete($transactionId, $companyId);
         setFlashMessage('✓ Transaction #' . $transactionId . ' deleted successfully!', 'success');
-        redirect("/sales/transactions/list.php?company={$companyId}");
+        redirect("<?= WEB_ROOT ?>/transactions/list.php?company={$companyId}");
     } elseif (isset($_POST['delete_receipt_id'])) {
         if (Transaction::deleteReceipt($_POST['delete_receipt_id'], $transactionId)) {
             setFlashMessage('Receipt deleted successfully', 'success');
         } else {
             setFlashMessage('Failed to delete receipt', 'error');
         }
-        redirect("/sales/transactions/edit.php?id={$transactionId}&company={$companyId}");
+        redirect("<?= WEB_ROOT ?>/transactions/edit.php?id={$transactionId}&company={$companyId}");
     } else {
         // Handle multiple receipt uploads
         if (!empty($_FILES['receipts']['name'][0])) {
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 Transaction::update($transactionId, $companyId, $formData);
                 setFlashMessage('✓ Transaction updated successfully!', 'success');
-                redirect("/sales/transactions/list.php?company={$companyId}");
+                redirect("<?= WEB_ROOT ?>/transactions/list.php?company={$companyId}");
             } catch (Exception $e) {
                 $errors[] = 'Failed to update transaction: ' . $e->getMessage();
             }
@@ -141,7 +141,7 @@ include __DIR__ . '/../views/header.php';
         </div>
     </div>
     <div style="display: flex; gap: 12px;">
-        <a href="/sales/transactions/list.php?company=<?= $companyId ?>" 
+        <a href="<?= WEB_ROOT ?>/transactions/list.php?company=<?= $companyId ?>" 
            class="btn btn-white" style="border: 1px solid #d1d5db; color: #374151; font-weight: 500; display: flex; align-items: center; gap: 6px; padding: 8px 16px;">
             Cancel
         </a>
@@ -272,14 +272,14 @@ include __DIR__ . '/../views/header.php';
                                 <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
                                     <div style="width: 48px; height: 48px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                         <?php if ($isImage): ?>
-                                            <img src="/sales/<?= $receipt['file_path'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <img src="<?= WEB_ROOT ?>/<?= $receipt['file_path'] ?>" style="width: 100%; height: 100%; object-fit: cover;">
                                         <?php else: ?>
                                             <svg style="width: 20px; height: 20px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                         <?php endif; ?>
                                     </div>
                                     <div style="flex: 1;">
                                         <div style="font-size: 13px; font-weight: 500; color: #374151;"><?= htmlspecialchars($displayName) ?></div>
-                                        <a href="/sales/<?= $receipt['file_path'] ?>" target="_blank" style="font-size: 11px; color: #4f46e5;">View</a>
+                                        <a href="<?= WEB_ROOT ?>/<?= $receipt['file_path'] ?>" target="_blank" style="font-size: 11px; color: #4f46e5;">View</a>
                                     </div>
                                     <button type="submit" form="delete-receipt-<?= $receipt['id'] ?>" onclick="return confirm('Delete this receipt?');" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 6px;">
                                         <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -338,7 +338,7 @@ include __DIR__ . '/../views/header.php';
                 </button>
                 
                 <div style="display: flex; gap: 12px;">
-                    <a href="/sales/transactions/list.php?company=<?= $companyId ?>" style="padding: 10px 20px; color: #4b5563; font-weight: 500; text-decoration: none;">Cancel</a>
+                    <a href="<?= WEB_ROOT ?>/transactions/list.php?company=<?= $companyId ?>" style="padding: 10px 20px; color: #4b5563; font-weight: 500; text-decoration: none;">Cancel</a>
                     <button type="submit" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; color: white; padding: 10px 32px; border-radius: 8px; font-weight: 600; cursor: pointer;">
                         Save Changes
                     </button>

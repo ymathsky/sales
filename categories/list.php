@@ -39,10 +39,10 @@ include __DIR__ . '/../views/header.php';
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
-                <a href="/sales/index.php" class="btn" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 10px 20px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; border-radius: 8px; text-decoration: none;">
+                <a href="<?= WEB_ROOT ?>/index.php" class="btn" style="background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 10px 20px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; border-radius: 8px; text-decoration: none;">
                     ← Dashboard
                 </a>
-                <button onclick="window.openNewTab ? window.openNewTab('/sales/categories/create.php<?= $companyId ? '?company=' . $companyId : '' ?>', 'Add Category') : window.location.href='/sales/categories/create.php<?= $companyId ? '?company=' . $companyId : '' ?>'" 
+                <button onclick="window.openNewTab ? window.openNewTab('<?= WEB_ROOT ?>/categories/create.php<?= $companyId ? '?company=' . $companyId : '' ?>', 'Add Category') : window.location.href='<?= WEB_ROOT ?>/categories/create.php<?= $companyId ? '?company=' . $companyId : '' ?>'" 
                         class="btn" style="background: rgba(255,255,255,0.9); color: #0d9488; border: none; padding: 10px 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -116,7 +116,7 @@ include __DIR__ . '/../views/header.php';
                                 </div>
                                 <p style="font-size: 16px; font-weight: 500;">No categories found</p>
                                 <p style="margin-bottom: 24px;">Get started by adding your first transaction category.</p>
-                                <a href="/sales/categories/create.php" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 6px; background-color: #0d9488; border-color: #0d9488; color: white; text-decoration: none;">Add Category</a>
+                                <a href="<?= WEB_ROOT ?>/categories/create.php" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; border-radius: 6px; background-color: #0d9488; border-color: #0d9488; color: white; text-decoration: none;">Add Category</a>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -171,7 +171,7 @@ include __DIR__ . '/../views/header.php';
                                 </td>
                                 <td style="padding: 16px; text-align: right;">
                                     <div style="display: inline-flex; gap: 8px;">
-                                        <button onclick="window.openNewTab ? window.openNewTab('/sales/categories/edit.php?id=<?= $category['category_id'] ?>', 'Edit Category') : window.location.href='/sales/categories/edit.php?id=<?= $category['category_id'] ?>'" 
+                                        <button onclick="window.openNewTab ? window.openNewTab('<?= WEB_ROOT ?>/categories/edit.php?id=<?= $category['category_id'] ?>', 'Edit Category') : window.location.href='<?= WEB_ROOT ?>/categories/edit.php?id=<?= $category['category_id'] ?>'" 
                                                 class="btn btn-sm"
                                                 style="padding: 6px 14px; font-size: 13px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
                                                 onmouseover="this.style.background='#2563eb'"
@@ -179,7 +179,7 @@ include __DIR__ . '/../views/header.php';
                                             Edit
                                         </button>
                                         <?php if (Category::getUsageCount($category['category_id']) == 0): ?>
-                                            <a href="/sales/categories/delete.php?id=<?= $category['category_id'] ?>" 
+                                            <a href="<?= WEB_ROOT ?>/categories/delete.php?id=<?= $category['category_id'] ?>" 
                                                class="btn btn-sm"
                                                onclick="return confirm('Delete this category?')"
                                                style="padding: 6px 14px; font-size: 13px; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; transition: background 0.2s;"

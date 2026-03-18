@@ -70,9 +70,9 @@ include __DIR__ . '/../views/header.php';
         AR Dashboard - <?= htmlspecialchars($company['name']) ?>
     </h1>
     <div>
-        <a href="/sales/invoices/create.php?company=<?= $companyId ?>" class="btn btn-success">+ New Invoice</a>
-        <a href="/sales/customers/list.php?company=<?= $companyId ?>" class="btn btn-primary">Customers</a>
-        <a href="/sales/index.php?company=<?= $companyId ?>" class="btn btn-secondary">← Dashboard</a>
+        <a href="<?= WEB_ROOT ?>/invoices/create.php?company=<?= $companyId ?>" class="btn btn-success">+ New Invoice</a>
+        <a href="<?= WEB_ROOT ?>/customers/list.php?company=<?= $companyId ?>" class="btn btn-primary">Customers</a>
+        <a href="<?= WEB_ROOT ?>/index.php?company=<?= $companyId ?>" class="btn btn-secondary">← Dashboard</a>
     </div>
 </div>
 
@@ -133,7 +133,7 @@ include __DIR__ . '/../views/header.php';
             ?>
                 <tr>
                     <td style="font-weight: 600;">
-                        <a href="/sales/customers/view.php?id=<?= $row['customer_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/customers/view.php?id=<?= $row['customer_id'] ?>&company=<?= $companyId ?>" 
                            style="color: var(--primary-color); text-decoration: none;">
                             <?= htmlspecialchars($row['customer_name']) ?>
                         </a>
@@ -179,7 +179,7 @@ include __DIR__ . '/../views/header.php';
 <!-- Recent Invoices -->
 <h2 style="margin-top: 40px; margin-bottom: 20px;">Recent Invoices</h2>
 
-<a href="/sales/invoices/list.php?company=<?= $companyId ?>" class="btn btn-primary" style="margin-bottom: 20px;">View All Invoices</a>
+<a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-primary" style="margin-bottom: 20px;">View All Invoices</a>
 
 <?php 
 $recentInvoices = array_slice($invoices, 0, 10);
@@ -203,7 +203,7 @@ if (!empty($recentInvoices)):
             <?php foreach ($recentInvoices as $inv): ?>
                 <tr>
                     <td style="font-weight: 600;">
-                        <a href="/sales/invoices/view.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
+                        <a href="<?= WEB_ROOT ?>/invoices/view.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
                            style="color: var(--primary-color); text-decoration: none;">
                             <?= htmlspecialchars($inv['invoice_number']) ?>
                         </a>

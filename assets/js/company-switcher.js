@@ -45,7 +45,7 @@
         document.body.style.cursor = 'wait';
         
         // Update Session via API first to ensure backend state is correct
-        fetch('/sales/api/switch-company.php', {
+        fetch('<?= WEB_ROOT ?>/api/switch-company.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
