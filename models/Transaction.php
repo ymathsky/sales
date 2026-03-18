@@ -69,6 +69,44 @@ class Transaction {
     }
     
     /**
+     * Get transaction summary (income vs expense)
+     * 
+     * @param int $companyId Company ID
+     * @param string|null $startDate Start date filter
+     * @param string|null $endDate End date filter
+     * @return array Summary data
+     */
+    public static function getSummary($companyId, $startDate = null, $endDate = null) {
+        $sql = "SELECT 
+                    SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
+                    SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
+                FROM transactions 
+                WHERE company_id = ?";
+        
+        $params = [$companyId];
+        
+        if ($startDate) {
+            $sql .= " AND transaction_date >= ?";
+            $params[] = $startDate;
+        }
+        
+        if ($endDate) {
+            $sql .= " AND transaction_date <= ?";
+            $params[] = $endDate;
+        }
+        
+        $stmt = executeQuery($sql, $params);
+        $result = $stmt->fetch();
+        
+        // Ensure we return zeros instead of nulls if no transactions
+        return [
+            'total_income' => $result['total_income'] ?? 0,
+            'total_expense' => $result['total_expense'] ?? 0,
+            'net_balance' => ($result['total_income'] ?? 0) - ($result['total_expense'] ?? 0)
+        ];
+    }
+
+    /**
      * Get transaction by ID
      * 
      * @param int $transactionId Transaction ID
