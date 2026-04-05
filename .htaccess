@@ -1,6 +1,11 @@
 # Disable directory browsing
 Options -Indexes
 
+# Enable PHP processing for .php files
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
+
 # Protect sensitive files
 <FilesMatch "^\.">
     <IfModule mod_authz_core.c>
