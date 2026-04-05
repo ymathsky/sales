@@ -1,7 +1,11 @@
 # Dependencies
 /vendor/
 /node_modules/
+/mobile/node_modules/
 /bower_components/
+
+# Expo / local build artifacts
+/mobile/.expo/
 
 # Configuration
 /config/database.php

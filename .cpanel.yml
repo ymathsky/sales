@@ -1,0 +1,7 @@
+deployment:
+  tasks:
+    setup:
+      - echo "cPanel deployment setup"
+    update:
+      - echo "Deploying master branch to cPanel"
+  allowBranch: master
