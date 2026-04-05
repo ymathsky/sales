@@ -411,8 +411,9 @@ function closeTab(tabId) {
     }
     
     // If no tabs left, open dashboard
+    const rootPath = typeof webRoot !== 'undefined' ? webRoot : '';
     if (window.tabs.length === 0) {
-        openNewTab('<?= WEB_ROOT ?>/index.php', 'Dashboard');
+        openNewTab(rootPath + '/index.php', 'Dashboard');
     } else {
         saveTabs(); // Save after closing tab
     }
@@ -446,7 +447,8 @@ if (typeof window.switchCompany === 'undefined') {
             }
         });
         saveTabs();
-        window.location.href = '<?= WEB_ROOT ?>/index.php?company=' + companyId;
+        const rootPath = typeof webRoot !== 'undefined' ? webRoot : '';
+        window.location.href = rootPath + '/index.php?company=' + companyId;
     }
 }
 

@@ -44,8 +44,9 @@
         const oldCursor = document.body.style.cursor;
         document.body.style.cursor = 'wait';
         
+        const rootPath = typeof webRoot !== 'undefined' ? webRoot : '';
         // Update Session via API first to ensure backend state is correct
-        fetch('<?= WEB_ROOT ?>/api/switch-company.php', {
+        fetch(rootPath + '/api/switch-company.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
