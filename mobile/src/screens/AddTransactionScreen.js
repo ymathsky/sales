@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
-    ScrollView, Alert, ActivityIndicator, Switch
+    ScrollView, Alert, ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createTransaction } from '../api/client';
+import { createTransaction, getCategories } from '../api/client';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
-const CATEGORIES_INCOME = ['Sales', 'Service Fee', 'Rental', 'Investment', 'Refund', 'Other'];
-const CATEGORIES_EXPENSE = ['Supplies', 'Utilities', 'Salary', 'Rent', 'Marketing', 'Transport', 'Maintenance', 'Other'];
 
 function FieldLabel({ text, required }) {
     return (
@@ -46,8 +44,18 @@ export default function AddTransactionScreen() {
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [referenceNo, setReferenceNo] = useState('');
     const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
 
-    const categories = type === 'income' ? CATEGORIES_INCOME : CATEGORIES_EXPENSE;
+    useEffect(() => {
+        setCategoriesLoading(true);
+        getCategories(type)
+            .then(res => {
+                if (res.success) setCategories(res.data.map(c => c.name));
+            })
+            .catch(() => {})
+            .finally(() => setCategoriesLoading(false));
+    }, [type]);
 
     async function handleSubmit() {
         if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
@@ -143,7 +151,10 @@ export default function AddTransactionScreen() {
 
                 {/* Category */}
                 <FieldLabel text="Category" />
-                <OptionRow options={categories} selected={category} onSelect={setCategory} />
+                {categoriesLoading
+                    ? <ActivityIndicator size="small" color="#2563EB" style={{ marginBottom: 16 }} />
+                    : <OptionRow options={categories} selected={category} onSelect={setCategory} />
+                }
 
                 {/* Description */}
                 <FieldLabel text="Description" />
@@ -173,13 +184,13 @@ export default function AddTransactionScreen() {
 
                 {/* Submit */}
                 <TouchableOpacity
-                    style={[styles.submitBtn, loading && styles.submitBtnDisabled, type === 'expense' && styles.submitBtnExpense]}
+                    style={[styles.submitBtn, loading && styles.submitBtnDisabled, type === 'out' && styles.submitBtnExpense]}
                     onPress={handleSubmit}
                     disabled={loading}
                 >
                     {loading
                         ? <ActivityIndicator color="#fff" />
-                        : <Text style={styles.submitBtnText}>Save {type === 'income' ? 'Income' : 'Expense'}</Text>
+                        : <Text style={styles.submitBtnText}>Save {type === 'in' ? 'Income' : 'Expense'}</Text>
                     }
                 </TouchableOpacity>
             </View>

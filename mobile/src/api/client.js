@@ -100,6 +100,16 @@ export async function deleteTransaction(id) {
 }
 
 // =========================================
+// Categories
+// =========================================
+
+export async function getCategories(type = null) {
+    const query = type ? `?type=${type}` : '';
+    const res = await apiRequest(`/categories.php${query}`);
+    return res.json();
+}
+
+// =========================================
 // Companies
 // =========================================
 

@@ -4,11 +4,9 @@ import {
     ScrollView, Alert, ActivityIndicator
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { updateTransaction, deleteTransaction } from '../api/client';
+import { updateTransaction, deleteTransaction, getCategories } from '../api/client';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
-const CATEGORIES_IN  = ['Sales', 'Service Fee', 'Rental', 'Investment', 'Refund', 'Other'];
-const CATEGORIES_OUT = ['Supplies', 'Utilities', 'Salary', 'Rent', 'Marketing', 'Transport', 'Maintenance', 'Other'];
 
 function FieldLabel({ text, required }) {
     return (
@@ -50,8 +48,18 @@ export default function EditTransactionScreen() {
     const [referenceNo, setReferenceNo]   = useState(transaction.reference_number || '');
     const [saving, setSaving]             = useState(false);
     const [deleting, setDeleting]         = useState(false);
+    const [categories, setCategories]     = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
 
-    const categories = type === 'in' ? CATEGORIES_IN : CATEGORIES_OUT;
+    useEffect(() => {
+        setCategoriesLoading(true);
+        getCategories(type)
+            .then(res => {
+                if (res.success) setCategories(res.data.map(c => c.name));
+            })
+            .catch(() => {})
+            .finally(() => setCategoriesLoading(false));
+    }, [type]);
 
     async function handleSave() {
         if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
@@ -157,7 +165,10 @@ export default function EditTransactionScreen() {
 
                 {/* Category */}
                 <FieldLabel text="Category" />
-                <OptionRow options={categories} selected={category} onSelect={setCategory} />
+                {categoriesLoading
+                    ? <ActivityIndicator size="small" color="#2563EB" style={{ marginBottom: 16 }} />
+                    : <OptionRow options={categories} selected={category} onSelect={setCategory} />
+                }
 
                 {/* Description */}
                 <FieldLabel text="Description" />
