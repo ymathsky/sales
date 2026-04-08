@@ -9,6 +9,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import TransactionsScreen from './src/screens/TransactionsScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
+import EditTransactionScreen from './src/screens/EditTransactionScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
@@ -87,6 +88,17 @@ function AppNavigator() {
                                 headerTitleStyle: { fontWeight: 'bold' },
                             }}
                         />
+                        <Stack.Screen
+                            name="EditTransaction"
+                            component={EditTransactionScreen}
+                            options={{
+                                headerShown: true,
+                                title: 'Edit Transaction',
+                                headerStyle: { backgroundColor: '#2563EB' },
+                                headerTintColor: '#fff',
+                                headerTitleStyle: { fontWeight: 'bold' },
+                            }}
+                        />
                     </>
                 )}
             </Stack.Navigator>
@@ -97,11 +109,6 @@ function AppNavigator() {
 export default function App() {
     return (
         <AuthProvider>
-            <AppNavigator />
-        </AuthProvider>
-    );
-}
-
             <AppNavigator />
         </AuthProvider>
     );

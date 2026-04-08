@@ -71,10 +71,30 @@ export async function getTransactions(params = {}) {
     return res.json();
 }
 
+export async function getTransaction(id) {
+    const res = await apiRequest(`/transactions.php?id=${id}`);
+    return res.json();
+}
+
 export async function createTransaction(data) {
     const res = await apiRequest('/transactions.php', {
         method: 'POST',
         body: JSON.stringify(data),
+    });
+    return res.json();
+}
+
+export async function updateTransaction(id, data) {
+    const res = await apiRequest(`/transactions.php?id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+    return res.json();
+}
+
+export async function deleteTransaction(id) {
+    const res = await apiRequest(`/transactions.php?id=${id}`, {
+        method: 'DELETE',
     });
     return res.json();
 }

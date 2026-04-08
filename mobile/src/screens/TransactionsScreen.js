@@ -3,6 +3,8 @@ import {
     View, Text, StyleSheet, FlatList, TouchableOpacity,
     ActivityIndicator, TextInput, RefreshControl
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getTransactions } from '../api/client';
 
 const TYPE_FILTERS = [
@@ -11,10 +13,10 @@ const TYPE_FILTERS = [
     { label: 'Expense', value: 'out' },
 ];
 
-function TransactionRow({ item }) {
+function TransactionRow({ item, onPress }) {
     const isIncome = item.type === 'in';
     return (
-        <View style={styles.row}>
+        <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
             <View style={[styles.typeBadge, { backgroundColor: isIncome ? '#D1FAE5' : '#FEE2E2' }]}>
                 <Text style={{ fontSize: 18 }}>{isIncome ? '📈' : '📉'}</Text>
             </View>
@@ -29,11 +31,12 @@ function TransactionRow({ item }) {
             <Text style={[styles.rowAmount, { color: isIncome ? '#10B981' : '#EF4444' }]}>
                 {isIncome ? '+' : '-'}₱{parseFloat(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
-        </View>
+        </TouchableOpacity>
     );
 }
 
 export default function TransactionsScreen() {
+    const navigation = useNavigation();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -67,6 +70,10 @@ export default function TransactionsScreen() {
         setLoading(true);
         load(1, true);
     }, [typeFilter, search, load]);
+
+    useFocusEffect(useCallback(() => {
+        load(1, true);
+    }, [load]));
 
     function onRefresh() {
         setRefreshing(true);
@@ -121,7 +128,12 @@ export default function TransactionsScreen() {
             <FlatList
                 data={transactions}
                 keyExtractor={item => String(item.transaction_id)}
-                renderItem={({ item }) => <TransactionRow item={item} />}
+                renderItem={({ item }) => (
+                    <TransactionRow
+                        item={item}
+                        onPress={() => navigation.navigate('EditTransaction', { transaction: item })}
+                    />
+                )}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 onEndReached={loadMore}
                 onEndReachedThreshold={0.4}
