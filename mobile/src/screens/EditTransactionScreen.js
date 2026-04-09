@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { updateTransaction, deleteTransaction, getCategories, getReceipts, uploadReceipts } from '../api/client';
+import { updateTransaction, deleteTransaction, getCategories, getReceipts, uploadReceipts, deleteReceipt } from '../api/client';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
 const RECEIPT_LIMIT = 20;
@@ -56,6 +56,7 @@ export default function EditTransactionScreen() {
     const [existingReceipts, setExistingReceipts] = useState([]);
     const [selectedReceipts, setSelectedReceipts] = useState([]);
     const [receiptsLoading, setReceiptsLoading] = useState(false);
+    const [deletingReceiptId, setDeletingReceiptId] = useState(null);
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewUri, setPreviewUri] = useState('');
 
@@ -139,6 +140,36 @@ export default function EditTransactionScreen() {
     function closePreview() {
         setPreviewVisible(false);
         setPreviewUri('');
+    }
+
+    function confirmDeleteExistingReceipt(receipt) {
+        Alert.alert(
+            'Delete Receipt',
+            'Are you sure you want to delete this receipt photo?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: () => handleDeleteExistingReceipt(receipt) },
+            ]
+        );
+    }
+
+    async function handleDeleteExistingReceipt(receipt) {
+        setDeletingReceiptId(receipt.id);
+        try {
+            const result = await deleteReceipt(transaction.transaction_id, receipt.id);
+            if (result.success) {
+                setExistingReceipts(prev => prev.filter(item => item.id !== receipt.id));
+                if (previewVisible && previewUri === receipt.url) {
+                    closePreview();
+                }
+            } else {
+                Alert.alert('Error', result.error || 'Failed to delete receipt');
+            }
+        } catch {
+            Alert.alert('Error', 'Network error while deleting receipt');
+        } finally {
+            setDeletingReceiptId(null);
+        }
     }
 
     async function handleSave() {
@@ -291,13 +322,21 @@ export default function EditTransactionScreen() {
                 {existingReceipts.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.receiptPreviewRow}>
                         {existingReceipts.map((receipt) => (
-                            <TouchableOpacity
-                                key={String(receipt.id)}
-                                style={styles.existingReceiptThumbWrap}
-                                onPress={() => openPreview(receipt.url)}
-                            >
-                                <Image source={{ uri: receipt.url }} style={styles.receiptThumb} />
-                            </TouchableOpacity>
+                            <View key={String(receipt.id)} style={styles.existingReceiptThumbWrap}>
+                                <TouchableOpacity onPress={() => openPreview(receipt.url)}>
+                                    <Image source={{ uri: receipt.url }} style={styles.receiptThumb} />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.existingReceiptDeleteBtn}
+                                    onPress={() => confirmDeleteExistingReceipt(receipt)}
+                                    disabled={deletingReceiptId === receipt.id}
+                                >
+                                    {deletingReceiptId === receipt.id
+                                        ? <ActivityIndicator size="small" color="#fff" />
+                                        : <Text style={styles.existingReceiptDeleteText}>x</Text>
+                                    }
+                                </TouchableOpacity>
+                            </View>
                         ))}
                     </ScrollView>
                 )}
@@ -426,7 +465,19 @@ const styles = StyleSheet.create({
     },
     receiptCameraText: { color: '#047857', fontWeight: '700', textAlign: 'center' },
     receiptPreviewRow: { marginBottom: 16 },
-    existingReceiptThumbWrap: { marginRight: 10 },
+    existingReceiptThumbWrap: { marginRight: 10, position: 'relative' },
+    existingReceiptDeleteBtn: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#DC2626',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    existingReceiptDeleteText: { color: '#fff', fontSize: 11, fontWeight: '700' },
     receiptThumbWrap: { marginRight: 10, position: 'relative' },
     receiptThumb: { width: 78, height: 78, borderRadius: 10, backgroundColor: '#E5E7EB' },
     receiptRemoveBtn: {
