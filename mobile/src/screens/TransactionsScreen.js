@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, StyleSheet, FlatList, TouchableOpacity,
-    ActivityIndicator, TextInput, RefreshControl
+    ActivityIndicator, TextInput, RefreshControl, Alert
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as Print from 'expo-print';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getTransactions } from '../api/client';
@@ -91,6 +94,7 @@ export default function TransactionsScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     const load = useCallback(async (pageNum = 1, reset = true) => {
         try {
@@ -168,6 +172,159 @@ export default function TransactionsScreen() {
         load(page + 1, false);
     }
 
+    async function fetchAllFilteredTransactions() {
+        let pageNum = 1;
+        const allItems = [];
+
+        while (true) {
+            const params = { page: pageNum, limit: 100 };
+            if (typeFilter) params.type = typeFilter;
+            if (search) params.search = search;
+            if (startDate) params.start_date = startDate;
+            if (endDate) params.end_date = endDate;
+
+            const result = await getTransactions(params);
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to fetch transactions for export');
+            }
+
+            const batch = result.data || [];
+            allItems.push(...batch);
+
+            if (batch.length < 100) break;
+            pageNum += 1;
+        }
+
+        return allItems;
+    }
+
+    function escapeCsv(value) {
+        const str = String(value ?? '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    }
+
+    function formatAmountForDisplay(type, amount) {
+        const num = Number(amount || 0);
+        const sign = type === 'in' ? '+' : '-';
+        return `${sign}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    async function exportCsv() {
+        setExporting(true);
+        try {
+            const items = await fetchAllFilteredTransactions();
+            if (items.length === 0) {
+                Alert.alert('No Data', 'No transactions found for current filters.');
+                return;
+            }
+
+            const headers = ['Date', 'Type', 'Amount', 'Category', 'Description', 'Payment Method', 'Reference Number'];
+            const lines = [headers.join(',')];
+
+            items.forEach(item => {
+                lines.push([
+                    escapeCsv(item.transaction_date),
+                    escapeCsv(item.type === 'in' ? 'Income' : 'Expense'),
+                    escapeCsv(formatAmountForDisplay(item.type, item.amount)),
+                    escapeCsv(item.category || ''),
+                    escapeCsv(item.description || ''),
+                    escapeCsv(item.payment_method || ''),
+                    escapeCsv(item.reference_number || ''),
+                ].join(','));
+            });
+
+            const csvContent = lines.join('\n');
+            const fileUri = `${FileSystem.cacheDirectory}transactions_${Date.now()}.csv`;
+            await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+                encoding: FileSystem.EncodingType.UTF8,
+            });
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(fileUri, {
+                    mimeType: 'text/csv',
+                    dialogTitle: 'Export Transactions CSV',
+                });
+            } else {
+                Alert.alert('Export Ready', `CSV saved to: ${fileUri}`);
+            }
+        } catch (e) {
+            Alert.alert('Export Failed', e.message || 'Unable to export CSV.');
+        } finally {
+            setExporting(false);
+        }
+    }
+
+    async function exportPdf() {
+        setExporting(true);
+        try {
+            const items = await fetchAllFilteredTransactions();
+            if (items.length === 0) {
+                Alert.alert('No Data', 'No transactions found for current filters.');
+                return;
+            }
+
+            const rows = items.map(item => `
+                <tr>
+                    <td>${item.transaction_date || ''}</td>
+                    <td>${item.type === 'in' ? 'Income' : 'Expense'}</td>
+                    <td>${formatAmountForDisplay(item.type, item.amount)}</td>
+                    <td>${item.category || ''}</td>
+                    <td>${item.description || ''}</td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <html>
+                    <head>
+                        <meta charset="utf-8" />
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 16px; }
+                            h1 { margin: 0 0 8px 0; font-size: 20px; }
+                            p { margin: 0 0 16px 0; color: #555; }
+                            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+                            th { background: #f3f4f6; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Transactions Export</h1>
+                        <p>Generated: ${new Date().toLocaleString()}</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </body>
+                </html>
+            `;
+
+            const file = await Print.printToFileAsync({ html, base64: false });
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(file.uri, {
+                    mimeType: 'application/pdf',
+                    dialogTitle: 'Export Transactions PDF',
+                });
+            } else {
+                Alert.alert('Export Ready', `PDF saved to: ${file.uri}`);
+            }
+        } catch (e) {
+            Alert.alert('Export Failed', e.message || 'Unable to export PDF.');
+        } finally {
+            setExporting(false);
+        }
+    }
+
     function renderFooter() {
         if (!loadingMore) return null;
         return <ActivityIndicator style={{ margin: 16 }} color="#2563EB" />;
@@ -242,6 +399,15 @@ export default function TransactionsScreen() {
                     </TouchableOpacity>
                 </View>
             )}
+
+            <View style={styles.exportRow}>
+                <TouchableOpacity style={[styles.exportBtn, exporting && styles.exportBtnDisabled]} onPress={exportCsv} disabled={exporting}>
+                    <Text style={styles.exportBtnText}>{exporting ? 'Working...' : 'Export CSV'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.exportBtn, styles.exportBtnPdf, exporting && styles.exportBtnDisabled]} onPress={exportPdf} disabled={exporting}>
+                    <Text style={[styles.exportBtnText, styles.exportBtnTextPdf]}>{exporting ? 'Working...' : 'Export PDF'}</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* List */}
             <FlatList
@@ -324,6 +490,26 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    exportRow: {
+        backgroundColor: '#fff',
+        flexDirection: 'row',
+        gap: 10,
+        paddingHorizontal: 12,
+        paddingBottom: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
+    },
+    exportBtn: {
+        flex: 1,
+        backgroundColor: '#E0E7FF',
+        borderRadius: 10,
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+    exportBtnPdf: { backgroundColor: '#FEE2E2' },
+    exportBtnText: { color: '#3730A3', fontWeight: '700', fontSize: 14 },
+    exportBtnTextPdf: { color: '#991B1B' },
+    exportBtnDisabled: { opacity: 0.6 },
     row: {
         backgroundColor: '#fff',
         marginHorizontal: 12,
