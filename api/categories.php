@@ -4,7 +4,7 @@
  */
 
 require_once __DIR__ . '/../includes/session.php';
-require_once __DIR__ . '/../models/Category.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -24,21 +24,30 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $companyId = getCurrentCompanyId();
-$type      = $_GET['type'] ?? null; // 'in', 'out', or omit for all
+$type      = $_GET['type'] ?? null;
 
-// Map mobile type values ('in'/'out') to DB type column ('in'/'out'/'both')
 if ($type && !in_array($type, ['in', 'out'], true)) {
     echo json_encode(['success' => false, 'error' => 'Invalid type']);
     exit;
 }
 
-$categories = Category::getAll(true, $type, $companyId);
+$db = getDBConnection();
+
+$sql    = "SELECT category_id, name, type FROM transaction_categories WHERE company_id = ?";
+$params = [$companyId];
+
+if ($type) {
+    $sql    .= " AND (type = ? OR type = 'both')";
+    $params[] = $type;
+}
+
+$sql .= " ORDER BY name ASC";
+
+$stmt = $db->prepare($sql);
+$stmt->execute($params);
+$categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 echo json_encode([
     'success' => true,
-    'data'    => array_values(array_map(fn($c) => [
-        'category_id' => $c['category_id'],
-        'name'        => $c['name'],
-        'type'        => $c['type'],
-    ], $categories)),
+    'data'    => array_values($categories),
 ]);
