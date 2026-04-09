@@ -13,6 +13,47 @@ const TYPE_FILTERS = [
     { label: 'Expense', value: 'out' },
 ];
 
+const DATE_FILTERS = [
+    { label: 'All', value: 'all' },
+    { label: 'Today', value: 'today' },
+    { label: 'Week', value: 'week' },
+    { label: 'Month', value: 'month' },
+    { label: 'Custom', value: 'custom' },
+];
+
+function toYMD(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getPresetRange(preset) {
+    const now = new Date();
+    const end = toYMD(now);
+
+    if (preset === 'today') {
+        return { startDate: end, endDate: end };
+    }
+
+    if (preset === 'week') {
+        const start = new Date(now);
+        start.setDate(now.getDate() - 6);
+        return { startDate: toYMD(start), endDate: end };
+    }
+
+    if (preset === 'month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { startDate: toYMD(start), endDate: end };
+    }
+
+    return { startDate: '', endDate: '' };
+}
+
+function isValidYMD(value) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 function TransactionRow({ item, onPress }) {
     const isIncome = item.type === 'in';
     return (
@@ -41,6 +82,11 @@ export default function TransactionsScreen() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [typeFilter, setTypeFilter] = useState('');
+    const [dateFilter, setDateFilter] = useState('all');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -51,6 +97,8 @@ export default function TransactionsScreen() {
             const params = { page: pageNum, limit: 20 };
             if (typeFilter) params.type = typeFilter;
             if (search) params.search = search;
+            if (startDate) params.start_date = startDate;
+            if (endDate) params.end_date = endDate;
 
             const result = await getTransactions(params);
             if (result.success) {
@@ -64,12 +112,12 @@ export default function TransactionsScreen() {
             setRefreshing(false);
             setLoadingMore(false);
         }
-    }, [typeFilter, search]);
+    }, [typeFilter, search, startDate, endDate]);
 
     useEffect(() => {
         setLoading(true);
         load(1, true);
-    }, [typeFilter, search, load]);
+    }, [typeFilter, search, startDate, endDate, load]);
 
     useFocusEffect(useCallback(() => {
         load(1, true);
@@ -78,6 +126,40 @@ export default function TransactionsScreen() {
     function onRefresh() {
         setRefreshing(true);
         load(1, true);
+    }
+
+    function onDateFilterChange(value) {
+        setDateFilter(value);
+
+        if (value === 'custom') {
+            setStartDate('');
+            setEndDate('');
+            return;
+        }
+
+        const range = getPresetRange(value);
+        setStartDate(range.startDate);
+        setEndDate(range.endDate);
+    }
+
+    function applyCustomDateRange() {
+        if (!customStartDate || !customEndDate) {
+            Alert.alert('Validation Error', 'Please set both start and end date.');
+            return;
+        }
+
+        if (!isValidYMD(customStartDate) || !isValidYMD(customEndDate)) {
+            Alert.alert('Validation Error', 'Use YYYY-MM-DD format.');
+            return;
+        }
+
+        if (customStartDate > customEndDate) {
+            Alert.alert('Validation Error', 'Start date must be before or equal to end date.');
+            return;
+        }
+
+        setStartDate(customStartDate);
+        setEndDate(customEndDate);
     }
 
     function loadMore() {
@@ -124,6 +206,43 @@ export default function TransactionsScreen() {
                 ))}
             </View>
 
+            {/* Date Filter Tabs */}
+            <View style={styles.filterRowDate}>
+                {DATE_FILTERS.map(f => (
+                    <TouchableOpacity
+                        key={f.value}
+                        style={[styles.filterBtn, dateFilter === f.value && styles.filterBtnActive]}
+                        onPress={() => onDateFilterChange(f.value)}
+                    >
+                        <Text style={[styles.filterBtnText, dateFilter === f.value && styles.filterBtnTextActive]}>
+                            {f.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {dateFilter === 'custom' && (
+                <View style={styles.customDateWrap}>
+                    <TextInput
+                        style={styles.customDateInput}
+                        placeholder="Start YYYY-MM-DD"
+                        placeholderTextColor="#9CA3AF"
+                        value={customStartDate}
+                        onChangeText={setCustomStartDate}
+                    />
+                    <TextInput
+                        style={styles.customDateInput}
+                        placeholder="End YYYY-MM-DD"
+                        placeholderTextColor="#9CA3AF"
+                        value={customEndDate}
+                        onChangeText={setCustomEndDate}
+                    />
+                    <TouchableOpacity style={styles.applyBtn} onPress={applyCustomDateRange}>
+                        <Text style={styles.applyBtnText}>Apply</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {/* List */}
             <FlatList
                 data={transactions}
@@ -166,6 +285,15 @@ const styles = StyleSheet.create({
         paddingBottom: 12,
         gap: 8,
     },
+    filterRowDate: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingHorizontal: 12,
+        paddingBottom: 12,
+        gap: 8,
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
+    },
     filterBtn: {
         paddingHorizontal: 16,
         paddingVertical: 8,
@@ -175,6 +303,27 @@ const styles = StyleSheet.create({
     filterBtnActive: { backgroundColor: '#2563EB' },
     filterBtnText: { color: '#6B7280', fontWeight: '600', fontSize: 14 },
     filterBtnTextActive: { color: '#fff' },
+    customDateWrap: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 12,
+        paddingBottom: 12,
+        gap: 8,
+    },
+    customDateInput: {
+        backgroundColor: '#F3F4F6',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        color: '#111827',
+    },
+    applyBtn: {
+        backgroundColor: '#2563EB',
+        borderRadius: 10,
+        alignItems: 'center',
+        paddingVertical: 10,
+    },
+    applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
     row: {
         backgroundColor: '#fff',
         marginHorizontal: 12,
