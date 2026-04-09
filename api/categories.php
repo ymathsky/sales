@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $companyId = getCurrentCompanyId();
 $type      = $_GET['type'] ?? null;
 
+requireCompanyAccess($companyId);
+
 if ($type && !in_array($type, ['in', 'out'], true)) {
     echo json_encode(['success' => false, 'error' => 'Invalid type']);
     exit;
@@ -33,19 +35,58 @@ if ($type && !in_array($type, ['in', 'out'], true)) {
 
 $db = getDBConnection();
 
-$sql    = "SELECT category_id, name, type FROM transaction_categories WHERE company_id = ?";
-$params = [$companyId];
-
-if ($type) {
-    $sql    .= " AND (type = ? OR type = 'both')";
-    $params[] = $type;
+function tableExists(PDO $db, $tableName) {
+    $stmt = $db->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?");
+    $stmt->execute([$tableName]);
+    return (int)$stmt->fetchColumn() > 0;
 }
 
-$sql .= " ORDER BY name ASC";
+function columnExists(PDO $db, $tableName, $columnName) {
+    $stmt = $db->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+    $stmt->execute([$tableName, $columnName]);
+    return (int)$stmt->fetchColumn() > 0;
+}
 
-$stmt = $db->prepare($sql);
-$stmt->execute($params);
-$categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$categories = [];
+
+try {
+    if (tableExists($db, 'categories')) {
+        $sql = "SELECT category_id, name, type FROM categories WHERE (company_id IS NULL OR company_id = ?)";
+        $params = [$companyId];
+
+        if (columnExists($db, 'categories', 'is_active')) {
+            $sql .= " AND is_active = 1";
+        }
+
+        if ($type) {
+            $sql .= " AND (type = ? OR type = 'both')";
+            $params[] = $type;
+        }
+
+        $sql .= " ORDER BY name ASC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } elseif (tableExists($db, 'transaction_categories')) {
+        $sql = "SELECT category_id, name, type FROM transaction_categories WHERE company_id = ?";
+        $params = [$companyId];
+
+        if ($type) {
+            $sql .= " AND (type = ? OR type = 'both')";
+            $params[] = $type;
+        }
+
+        $sql .= " ORDER BY name ASC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Throwable $e) {
+    error_log('categories.php error: ' . $e->getMessage());
+    $categories = [];
+}
 
 echo json_encode([
     'success' => true,
