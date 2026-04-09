@@ -31,7 +31,7 @@ function FieldLabel({ text, required }) {
 
 function OptionRow({ options, selected, onSelect }) {
     return (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+        <View style={styles.optionWrap}>
             {options.map(opt => (
                 <TouchableOpacity
                     key={opt}
@@ -43,7 +43,7 @@ function OptionRow({ options, selected, onSelect }) {
                     </Text>
                 </TouchableOpacity>
             ))}
-        </ScrollView>
+        </View>
     );
 }
 
@@ -240,7 +240,12 @@ export default function AddTransactionScreen() {
     }
 
     return (
-        <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+            >
             {/* Type Toggle */}
             <View style={styles.typeToggleRow}>
                 <TouchableOpacity
@@ -345,7 +350,13 @@ export default function AddTransactionScreen() {
                     </ScrollView>
                 )}
 
-                {/* Submit */}
+                {/* Spacer so content does not hide behind sticky actions */}
+                <View style={{ height: 8 }} />
+            </View>
+            </ScrollView>
+
+            {/* Sticky Actions */}
+            <View style={styles.actionBar}>
                 <TouchableOpacity
                     style={[styles.submitBtn, loading && styles.submitBtnDisabled, type === 'out' && styles.submitBtnExpense]}
                     onPress={handleSubmit}
@@ -365,7 +376,7 @@ export default function AddTransactionScreen() {
                     <Text style={styles.draftBtnText}>Save Offline Draft</Text>
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+        </View>
     );
 }
 
@@ -381,7 +392,7 @@ const styles = StyleSheet.create({
     },
     typeBtn: {
         flex: 1,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderRadius: 10,
         alignItems: 'center',
         backgroundColor: '#F3F4F6',
@@ -390,6 +401,7 @@ const styles = StyleSheet.create({
     typeBtnExpense: { backgroundColor: '#FEE2E2' },
     typeBtnText: { fontWeight: '700', fontSize: 15, color: '#6B7280' },
     typeBtnTextActive: { color: '#111827' },
+    scrollContent: { paddingBottom: 160 },
     form: { padding: 16 },
     label: { fontSize: 13, fontWeight: '700', color: '#374151', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.4 },
     amountRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
@@ -407,15 +419,20 @@ const styles = StyleSheet.create({
         borderColor: '#E5E7EB',
     },
     textArea: { height: 80, textAlignVertical: 'top' },
+    optionWrap: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 16,
+    },
     optionChip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
         backgroundColor: '#E5E7EB',
-        borderRadius: 20,
-        marginRight: 8,
+        borderRadius: 22,
     },
     optionChipActive: { backgroundColor: '#2563EB' },
-    optionChipText: { color: '#374151', fontWeight: '600', fontSize: 13, textTransform: 'capitalize' },
+    optionChipText: { color: '#374151', fontWeight: '700', fontSize: 13, textTransform: 'capitalize' },
     optionChipTextActive: { color: '#fff' },
     receiptActionRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
     receiptActionBtn: { flex: 1, marginBottom: 0 },
@@ -452,13 +469,25 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     receiptRemoveText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+    actionBar: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+        paddingHorizontal: 16,
+        paddingTop: 10,
+        paddingBottom: 14,
+    },
     submitBtn: {
         backgroundColor: '#10B981',
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: 'center',
-        marginTop: 8,
-        marginBottom: 40,
+        marginTop: 0,
+        marginBottom: 10,
     },
     submitBtnExpense: { backgroundColor: '#EF4444' },
     submitBtnDisabled: { opacity: 0.6 },
@@ -468,8 +497,8 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingVertical: 14,
         alignItems: 'center',
-        marginTop: -28,
-        marginBottom: 40,
+        marginTop: 0,
+        marginBottom: 0,
     },
     draftBtnText: { color: '#374151', fontWeight: '700', fontSize: 15 },
 });
