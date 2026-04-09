@@ -36,6 +36,19 @@ async function apiRequest(endpoint, options = {}) {
     return response;
 }
 
+async function parseApiResponse(response) {
+    const raw = await response.text();
+
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return {
+            success: false,
+            error: `Invalid API JSON response (${response.status}): ${String(raw).slice(0, 140)}`,
+        };
+    }
+}
+
 // =========================================
 // Auth
 // =========================================
@@ -45,7 +58,7 @@ export async function login(username, password) {
         method: 'POST',
         body: JSON.stringify({ username, password }),
     });
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function logout() {
@@ -59,7 +72,7 @@ export async function logout() {
 
 export async function getDashboard() {
     const res = await apiRequest('/dashboard.php');
-    return res.json();
+    return parseApiResponse(res);
 }
 
 // =========================================
@@ -69,12 +82,12 @@ export async function getDashboard() {
 export async function getTransactions(params = {}) {
     const query = new URLSearchParams({ page: 1, limit: 20, ...params });
     const res = await apiRequest(`/transactions.php?${query}`);
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function getTransaction(id) {
     const res = await apiRequest(`/transactions.php?id=${id}`);
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function createTransaction(data) {
@@ -82,7 +95,7 @@ export async function createTransaction(data) {
         method: 'POST',
         body: JSON.stringify(data),
     });
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function updateTransaction(id, data) {
@@ -90,14 +103,14 @@ export async function updateTransaction(id, data) {
         method: 'PUT',
         body: JSON.stringify(data),
     });
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function deleteTransaction(id) {
     const res = await apiRequest(`/transactions.php?id=${id}`, {
         method: 'DELETE',
     });
-    return res.json();
+    return parseApiResponse(res);
 }
 
 // =========================================
@@ -106,7 +119,7 @@ export async function deleteTransaction(id) {
 
 export async function getReceipts(transactionId) {
     const res = await apiRequest(`/receipts.php?transaction_id=${transactionId}`);
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function uploadReceipts(transactionId, assets = []) {
@@ -125,14 +138,45 @@ export async function uploadReceipts(transactionId, assets = []) {
         method: 'POST',
         body: formData,
     });
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function deleteReceipt(transactionId, receiptId) {
     const res = await apiRequest(`/receipts.php?transaction_id=${transactionId}&id=${receiptId}`, {
         method: 'DELETE',
     });
-    return res.json();
+    return parseApiResponse(res);
+}
+
+// =========================================
+// Customers
+// =========================================
+
+export async function getCustomers(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query ? `/customers.php?${query}` : '/customers.php';
+    const res = await apiRequest(endpoint);
+    return parseApiResponse(res);
+}
+
+export async function createCustomer(data) {
+    const res = await apiRequest('/customers.php', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+    return parseApiResponse(res);
+}
+
+// =========================================
+// Invoices
+// =========================================
+
+export async function createInvoice(data) {
+    const res = await apiRequest('/invoices.php', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+    return parseApiResponse(res);
 }
 
 // =========================================
@@ -142,7 +186,7 @@ export async function deleteReceipt(transactionId, receiptId) {
 export async function getCategories(type = null) {
     const query = type ? `?type=${type}` : '';
     const res = await apiRequest(`/categories.php${query}`);
-    return res.json();
+    return parseApiResponse(res);
 }
 
 // =========================================
@@ -151,7 +195,7 @@ export async function getCategories(type = null) {
 
 export async function getCompanies() {
     const res = await apiRequest('/companies.php');
-    return res.json();
+    return parseApiResponse(res);
 }
 
 export async function switchCompany(companyId) {
@@ -159,5 +203,5 @@ export async function switchCompany(companyId) {
         method: 'POST',
         body: JSON.stringify({ company_id: companyId }),
     });
-    return res.json();
+    return parseApiResponse(res);
 }
