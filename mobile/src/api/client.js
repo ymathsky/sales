@@ -9,9 +9,10 @@ const SESSION_KEY = 'session_cookie';
  */
 async function apiRequest(endpoint, options = {}) {
     const session = await AsyncStorage.getItem(SESSION_KEY);
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
 
     const headers = {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(session ? { Cookie: session } : {}),
         ...options.headers,
     };
@@ -94,6 +95,41 @@ export async function updateTransaction(id, data) {
 
 export async function deleteTransaction(id) {
     const res = await apiRequest(`/transactions.php?id=${id}`, {
+        method: 'DELETE',
+    });
+    return res.json();
+}
+
+// =========================================
+// Receipts
+// =========================================
+
+export async function getReceipts(transactionId) {
+    const res = await apiRequest(`/receipts.php?transaction_id=${transactionId}`);
+    return res.json();
+}
+
+export async function uploadReceipts(transactionId, assets = []) {
+    const formData = new FormData();
+    formData.append('transaction_id', String(transactionId));
+
+    assets.forEach((asset, idx) => {
+        formData.append('receipts[]', {
+            uri: asset.uri,
+            name: asset.fileName || `receipt_${Date.now()}_${idx}.jpg`,
+            type: asset.mimeType || 'image/jpeg',
+        });
+    });
+
+    const res = await apiRequest('/receipts.php', {
+        method: 'POST',
+        body: formData,
+    });
+    return res.json();
+}
+
+export async function deleteReceipt(transactionId, receiptId) {
+    const res = await apiRequest(`/receipts.php?transaction_id=${transactionId}&id=${receiptId}`, {
         method: 'DELETE',
     });
     return res.json();

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
+    Image,
     ScrollView, Alert, ActivityIndicator
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { updateTransaction, deleteTransaction, getCategories } from '../api/client';
+import { updateTransaction, deleteTransaction, getCategories, getReceipts, uploadReceipts } from '../api/client';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
 
@@ -50,6 +52,9 @@ export default function EditTransactionScreen() {
     const [deleting, setDeleting]         = useState(false);
     const [categories, setCategories]     = useState([]);
     const [categoriesLoading, setCategoriesLoading] = useState(false);
+    const [existingReceipts, setExistingReceipts] = useState([]);
+    const [selectedReceipts, setSelectedReceipts] = useState([]);
+    const [receiptsLoading, setReceiptsLoading] = useState(false);
 
     useEffect(() => {
         setCategoriesLoading(true);
@@ -60,6 +65,42 @@ export default function EditTransactionScreen() {
             .catch(() => {})
             .finally(() => setCategoriesLoading(false));
     }, [type]);
+
+    useEffect(() => {
+        setReceiptsLoading(true);
+        getReceipts(transaction.transaction_id)
+            .then(res => {
+                if (res.success) setExistingReceipts(res.data || []);
+            })
+            .catch(() => {})
+            .finally(() => setReceiptsLoading(false));
+    }, [transaction.transaction_id]);
+
+    async function pickReceipts() {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+            Alert.alert('Permission Required', 'Please allow photo library access to attach receipts.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsMultipleSelection: true,
+            quality: 0.7,
+            selectionLimit: 10,
+        });
+
+        if (result.canceled) return;
+
+        setSelectedReceipts(prev => {
+            const merged = [...prev, ...result.assets];
+            return merged.slice(0, 10);
+        });
+    }
+
+    function removeReceipt(indexToRemove) {
+        setSelectedReceipts(prev => prev.filter((_, index) => index !== indexToRemove));
+    }
 
     async function handleSave() {
         if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
@@ -82,6 +123,12 @@ export default function EditTransactionScreen() {
                 reference_number: referenceNo || null,
             });
             if (result.success) {
+                if (selectedReceipts.length > 0) {
+                    const uploadResult = await uploadReceipts(transaction.transaction_id, selectedReceipts);
+                    if (!uploadResult.success) {
+                        Alert.alert('Saved with warning', 'Transaction was updated, but some receipt uploads failed.');
+                    }
+                }
                 navigation.goBack();
             } else {
                 Alert.alert('Error', result.error || 'Failed to save');
@@ -196,6 +243,28 @@ export default function EditTransactionScreen() {
                     onChangeText={setReferenceNo}
                 />
 
+                {/* Receipts */}
+                <FieldLabel text="Receipt Photos" />
+                <Text style={styles.receiptInfoText}>
+                    {receiptsLoading ? 'Loading existing receipts...' : `${existingReceipts.length} existing photo(s)`}
+                </Text>
+                <TouchableOpacity style={styles.receiptPickerBtn} onPress={pickReceipts}>
+                    <Text style={styles.receiptPickerText}>+ Add More Photos ({selectedReceipts.length}/10)</Text>
+                </TouchableOpacity>
+
+                {selectedReceipts.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.receiptPreviewRow}>
+                        {selectedReceipts.map((asset, index) => (
+                            <View key={`${asset.uri}-${index}`} style={styles.receiptThumbWrap}>
+                                <Image source={{ uri: asset.uri }} style={styles.receiptThumb} />
+                                <TouchableOpacity style={styles.receiptRemoveBtn} onPress={() => removeReceipt(index)}>
+                                    <Text style={styles.receiptRemoveText}>x</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+
                 {/* Save */}
                 <TouchableOpacity
                     style={[styles.saveBtn, saving && styles.disabled, type === 'out' && styles.saveBtnExpense]}
@@ -260,6 +329,32 @@ const styles = StyleSheet.create({
     chipActive: { backgroundColor: '#2563EB' },
     chipText: { color: '#374151', fontWeight: '600', fontSize: 13, textTransform: 'capitalize' },
     chipTextActive: { color: '#fff' },
+    receiptInfoText: { marginTop: -4, marginBottom: 8, color: '#6B7280', fontSize: 12 },
+    receiptPickerBtn: {
+        backgroundColor: '#EFF6FF',
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+        borderRadius: 10,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        marginBottom: 10,
+    },
+    receiptPickerText: { color: '#1D4ED8', fontWeight: '700', textAlign: 'center' },
+    receiptPreviewRow: { marginBottom: 16 },
+    receiptThumbWrap: { marginRight: 10, position: 'relative' },
+    receiptThumb: { width: 78, height: 78, borderRadius: 10, backgroundColor: '#E5E7EB' },
+    receiptRemoveBtn: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#EF4444',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    receiptRemoveText: { color: '#fff', fontSize: 11, fontWeight: '700' },
     saveBtn: { backgroundColor: '#10B981', borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
     saveBtnExpense: { backgroundColor: '#EF4444' },
     saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
