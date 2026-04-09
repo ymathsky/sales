@@ -13,7 +13,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mdofficesupport.cashflow",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow Cash Flow to select receipt photos for your transactions."
+        "NSPhotoLibraryUsageDescription": "Allow Cash Flow to select receipt photos for your transactions.",
+        "NSCameraUsageDescription": "Allow Cash Flow to take receipt photos for your transactions."
       }
     },
     "android": {

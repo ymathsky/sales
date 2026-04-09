@@ -108,12 +108,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     $maxSize = 5 * 1024 * 1024; // 5MB
+    $maxFiles = 20;
 
     $files = $_FILES['receipts'];
     $names = is_array($files['name']) ? $files['name'] : [$files['name']];
     $tmpNames = is_array($files['tmp_name']) ? $files['tmp_name'] : [$files['tmp_name']];
     $errors = is_array($files['error']) ? $files['error'] : [$files['error']];
     $sizes = is_array($files['size']) ? $files['size'] : [$files['size']];
+
+    if (count($names) > $maxFiles) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Maximum of 20 receipt photos per upload']);
+        exit;
+    }
 
     $uploadDir = __DIR__ . '/../uploads/receipts/';
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {

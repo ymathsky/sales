@@ -9,6 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { updateTransaction, deleteTransaction, getCategories, getReceipts, uploadReceipts } from '../api/client';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
+const RECEIPT_LIMIT = 20;
 
 function FieldLabel({ text, required }) {
     return (
@@ -87,14 +88,39 @@ export default function EditTransactionScreen() {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsMultipleSelection: true,
             quality: 0.7,
-            selectionLimit: 10,
+            selectionLimit: RECEIPT_LIMIT,
         });
 
         if (result.canceled) return;
 
         setSelectedReceipts(prev => {
             const merged = [...prev, ...result.assets];
-            return merged.slice(0, 10);
+            return merged.slice(0, RECEIPT_LIMIT);
+        });
+    }
+
+    async function captureReceiptPhoto() {
+        if (selectedReceipts.length >= RECEIPT_LIMIT) {
+            Alert.alert('Limit reached', `You can attach up to ${RECEIPT_LIMIT} photos.`);
+            return;
+        }
+
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+            Alert.alert('Permission Required', 'Please allow camera access to capture receipt photos.');
+            return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.7,
+        });
+
+        if (result.canceled) return;
+
+        setSelectedReceipts(prev => {
+            const merged = [...prev, ...result.assets];
+            return merged.slice(0, RECEIPT_LIMIT);
         });
     }
 
@@ -248,9 +274,14 @@ export default function EditTransactionScreen() {
                 <Text style={styles.receiptInfoText}>
                     {receiptsLoading ? 'Loading existing receipts...' : `${existingReceipts.length} existing photo(s)`}
                 </Text>
-                <TouchableOpacity style={styles.receiptPickerBtn} onPress={pickReceipts}>
-                    <Text style={styles.receiptPickerText}>+ Add More Photos ({selectedReceipts.length}/10)</Text>
-                </TouchableOpacity>
+                <View style={styles.receiptActionRow}>
+                    <TouchableOpacity style={[styles.receiptPickerBtn, styles.receiptActionBtn]} onPress={pickReceipts}>
+                        <Text style={styles.receiptPickerText}>+ Gallery ({selectedReceipts.length}/{RECEIPT_LIMIT})</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.receiptCameraBtn, styles.receiptActionBtn]} onPress={captureReceiptPhoto}>
+                        <Text style={styles.receiptCameraText}>+ Camera</Text>
+                    </TouchableOpacity>
+                </View>
 
                 {selectedReceipts.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.receiptPreviewRow}>
@@ -330,6 +361,8 @@ const styles = StyleSheet.create({
     chipText: { color: '#374151', fontWeight: '600', fontSize: 13, textTransform: 'capitalize' },
     chipTextActive: { color: '#fff' },
     receiptInfoText: { marginTop: -4, marginBottom: 8, color: '#6B7280', fontSize: 12 },
+    receiptActionRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+    receiptActionBtn: { flex: 1, marginBottom: 0 },
     receiptPickerBtn: {
         backgroundColor: '#EFF6FF',
         borderWidth: 1,
@@ -337,9 +370,17 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingVertical: 12,
         paddingHorizontal: 14,
-        marginBottom: 10,
     },
     receiptPickerText: { color: '#1D4ED8', fontWeight: '700', textAlign: 'center' },
+    receiptCameraBtn: {
+        backgroundColor: '#ECFDF5',
+        borderWidth: 1,
+        borderColor: '#A7F3D0',
+        borderRadius: 10,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+    },
+    receiptCameraText: { color: '#047857', fontWeight: '700', textAlign: 'center' },
     receiptPreviewRow: { marginBottom: 16 },
     receiptThumbWrap: { marginRight: 10, position: 'relative' },
     receiptThumb: { width: 78, height: 78, borderRadius: 10, backgroundColor: '#E5E7EB' },
