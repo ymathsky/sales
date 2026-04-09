@@ -20,7 +20,16 @@ function SummaryCard({ label, amount, color, emoji }) {
 }
 
 function TrendChart({ data = [] }) {
-    if (!Array.isArray(data) || data.length === 0) return null;
+    if (!Array.isArray(data) || data.length === 0) {
+        return (
+            <View style={styles.chartCard}>
+                <Text style={styles.chartTitle}>Cash In vs Cash Out (6 Months)</Text>
+                <Text style={styles.chartEmptyText}>
+                    No monthly trend data yet. Add more transactions or ensure latest dashboard API is deployed.
+                </Text>
+            </View>
+        );
+    }
 
     const maxValue = Math.max(
         1,
@@ -214,6 +223,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     chartTitle: { fontSize: 14, fontWeight: '700', color: '#374151', marginBottom: 10 },
+    chartEmptyText: { color: '#6B7280', fontSize: 13, lineHeight: 20 },
     chartLegendRow: { flexDirection: 'row', gap: 16, marginBottom: 10 },
     legendItem: { flexDirection: 'row', alignItems: 'center' },
     legendDot: { width: 10, height: 10, borderRadius: 5, marginRight: 6 },
