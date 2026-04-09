@@ -119,10 +119,12 @@ export default function DashboardScreen() {
     const recent = data?.recent_transactions || [];
 
     return (
-        <ScrollView
-            style={styles.container}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
+        <View style={styles.container}>
+            <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
             {/* Header */}
             <View style={styles.header}>
                 <View>
@@ -171,19 +173,22 @@ export default function DashboardScreen() {
                 </View>
             ))}
 
-            {/* Add Transaction Button */}
+            </ScrollView>
+
             <TouchableOpacity
-                style={styles.fab}
+                style={styles.fabFloating}
                 onPress={() => navigation.navigate('CreateTransaction')}
+                activeOpacity={0.9}
             >
-                <Text style={styles.fabText}>+ Add Transaction</Text>
+                <Text style={styles.fabFloatingText}>+ Add</Text>
             </TouchableOpacity>
-        </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F3F4F6' },
+    scroll: { flex: 1, backgroundColor: '#F3F4F6' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     header: {
         backgroundColor: '#2563EB',
@@ -261,14 +266,19 @@ const styles = StyleSheet.create({
     txDate: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
     txAmount: { fontSize: 16, fontWeight: '700' },
     empty: { textAlign: 'center', color: '#9CA3AF', marginTop: 20, marginBottom: 10 },
-    fab: {
+    fabFloating: {
+        position: 'absolute',
+        right: 16,
+        bottom: 20,
         backgroundColor: '#2563EB',
-        margin: 16,
-        marginTop: 24,
-        padding: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginBottom: 40,
+        borderRadius: 24,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 6,
     },
-    fabText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    fabFloatingText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });

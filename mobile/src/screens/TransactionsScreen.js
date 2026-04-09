@@ -428,6 +428,14 @@ export default function TransactionsScreen() {
                 }
                 contentContainerStyle={{ paddingBottom: 20 }}
             />
+
+            <TouchableOpacity
+                style={styles.fabFloating}
+                onPress={() => navigation.navigate('CreateTransaction')}
+                activeOpacity={0.9}
+            >
+                <Text style={styles.fabFloatingText}>+ Add</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -510,6 +518,21 @@ const styles = StyleSheet.create({
     exportBtnText: { color: '#3730A3', fontWeight: '700', fontSize: 14 },
     exportBtnTextPdf: { color: '#991B1B' },
     exportBtnDisabled: { opacity: 0.6 },
+    fabFloating: {
+        position: 'absolute',
+        right: 16,
+        bottom: 20,
+        backgroundColor: '#2563EB',
+        borderRadius: 24,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 6,
+    },
+    fabFloatingText: { color: '#fff', fontWeight: '800', fontSize: 15 },
     row: {
         backgroundColor: '#fff',
         marginHorizontal: 12,
