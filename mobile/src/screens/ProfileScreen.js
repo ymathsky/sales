@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView,
-    ActivityIndicator, Alert
+    ActivityIndicator, Alert, TextInput
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useLock } from '../context/LockContext';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { getCompanies } from '../api/client';
 
 export default function ProfileScreen() {
     const { user, company, logout, switchCompany } = useAuth();
+    const {
+        pinEnabled,
+        biometricEnabled,
+        enablePin,
+        disablePin,
+        lockNow,
+        setBiometricPreference,
+    } = useLock();
+
     const [companies, setCompanies] = useState([]);
     const [loadingCompanies, setLoadingCompanies] = useState(true);
     const [switching, setSwitching] = useState(null);
+    const [supportsBiometric, setSupportsBiometric] = useState(false);
+
+    const [newPin, setNewPin] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
+    const [currentPin, setCurrentPin] = useState('');
 
     useEffect(() => {
         getCompanies()
@@ -18,6 +34,16 @@ export default function ProfileScreen() {
                 if (result.success) setCompanies(result.companies || []);
             })
             .finally(() => setLoadingCompanies(false));
+    }, []);
+
+    useEffect(() => {
+        LocalAuthentication.hasHardwareAsync()
+            .then(has => {
+                if (!has) return false;
+                return LocalAuthentication.isEnrolledAsync();
+            })
+            .then(enrolled => setSupportsBiometric(!!enrolled))
+            .catch(() => setSupportsBiometric(false));
     }, []);
 
     async function handleSwitch(companyId) {
@@ -37,9 +63,45 @@ export default function ProfileScreen() {
         ]);
     }
 
+    async function handleEnablePin() {
+        if (!/^\d{4,6}$/.test(newPin)) {
+            Alert.alert('Invalid PIN', 'PIN must be 4 to 6 digits.');
+            return;
+        }
+
+        if (newPin !== confirmPin) {
+            Alert.alert('PIN Mismatch', 'PIN and confirm PIN do not match.');
+            return;
+        }
+
+        try {
+            await enablePin(newPin, supportsBiometric);
+            setNewPin('');
+            setConfirmPin('');
+            Alert.alert('Security Enabled', 'PIN lock has been enabled.');
+        } catch {
+            Alert.alert('Error', 'Failed to enable PIN lock.');
+        }
+    }
+
+    async function handleDisablePin() {
+        if (!currentPin) {
+            Alert.alert('PIN Required', 'Enter current PIN to disable lock.');
+            return;
+        }
+
+        const ok = await disablePin(currentPin);
+        if (!ok) {
+            Alert.alert('Invalid PIN', 'Current PIN is incorrect.');
+            return;
+        }
+
+        setCurrentPin('');
+        Alert.alert('Security Disabled', 'PIN lock has been disabled.');
+    }
+
     return (
         <ScrollView style={styles.container}>
-            {/* User info card */}
             <View style={styles.userCard}>
                 <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
@@ -52,7 +114,6 @@ export default function ProfileScreen() {
                 </View>
             </View>
 
-            {/* Active company */}
             {company && (
                 <View style={styles.activeCompanyBadge}>
                     <Text style={styles.activeLabel}>Active Company</Text>
@@ -60,7 +121,6 @@ export default function ProfileScreen() {
                 </View>
             )}
 
-            {/* Company Switcher */}
             <Text style={styles.sectionTitle}>Switch Company</Text>
             <View style={styles.companyList}>
                 {loadingCompanies && <ActivityIndicator color="#2563EB" style={{ margin: 16 }} />}
@@ -88,7 +148,75 @@ export default function ProfileScreen() {
                 })}
             </View>
 
-            {/* Logout */}
+            <Text style={styles.sectionTitle}>Security</Text>
+            <View style={styles.securityCard}>
+                {!pinEnabled ? (
+                    <>
+                        <Text style={styles.securityHint}>Enable a 4-6 digit PIN to lock the app.</Text>
+                        <TextInput
+                            style={styles.securityInput}
+                            placeholder="New PIN (4-6 digits)"
+                            placeholderTextColor="#9CA3AF"
+                            keyboardType="number-pad"
+                            secureTextEntry
+                            maxLength={6}
+                            value={newPin}
+                            onChangeText={setNewPin}
+                        />
+                        <TextInput
+                            style={styles.securityInput}
+                            placeholder="Confirm PIN"
+                            placeholderTextColor="#9CA3AF"
+                            keyboardType="number-pad"
+                            secureTextEntry
+                            maxLength={6}
+                            value={confirmPin}
+                            onChangeText={setConfirmPin}
+                        />
+                        <TouchableOpacity style={styles.enableBtn} onPress={handleEnablePin}>
+                            <Text style={styles.enableBtnText}>Enable PIN Lock</Text>
+                        </TouchableOpacity>
+                        {supportsBiometric && (
+                            <Text style={styles.securityHint}>Biometric unlock will be enabled automatically.</Text>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        <Text style={styles.securityStatus}>PIN Lock: Enabled</Text>
+                        <Text style={styles.securityHint}>Biometric Unlock: {biometricEnabled ? 'On' : 'Off'}</Text>
+
+                        {supportsBiometric && (
+                            <TouchableOpacity
+                                style={styles.secondaryBtn}
+                                onPress={() => setBiometricPreference(!biometricEnabled)}
+                            >
+                                <Text style={styles.secondaryBtnText}>
+                                    {biometricEnabled ? 'Disable Biometric Unlock' : 'Enable Biometric Unlock'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity style={styles.secondaryBtn} onPress={lockNow}>
+                            <Text style={styles.secondaryBtnText}>Lock App Now</Text>
+                        </TouchableOpacity>
+
+                        <TextInput
+                            style={styles.securityInput}
+                            placeholder="Enter current PIN to disable"
+                            placeholderTextColor="#9CA3AF"
+                            keyboardType="number-pad"
+                            secureTextEntry
+                            maxLength={6}
+                            value={currentPin}
+                            onChangeText={setCurrentPin}
+                        />
+                        <TouchableOpacity style={styles.disableBtn} onPress={handleDisablePin}>
+                            <Text style={styles.disableBtnText}>Disable PIN Lock</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
+            </View>
+
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
                 <Text style={styles.logoutText}>🚪 Sign Out</Text>
             </TouchableOpacity>
@@ -174,6 +302,46 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 12,
     },
+    securityCard: {
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        borderRadius: 12,
+        padding: 14,
+        elevation: 1,
+    },
+    securityStatus: { color: '#111827', fontSize: 15, fontWeight: '700', marginBottom: 6 },
+    securityHint: { color: '#6B7280', fontSize: 13, marginBottom: 10 },
+    securityInput: {
+        backgroundColor: '#F3F4F6',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        color: '#111827',
+        marginBottom: 10,
+    },
+    enableBtn: {
+        backgroundColor: '#2563EB',
+        borderRadius: 10,
+        alignItems: 'center',
+        paddingVertical: 11,
+        marginBottom: 10,
+    },
+    enableBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    secondaryBtn: {
+        backgroundColor: '#E5E7EB',
+        borderRadius: 10,
+        alignItems: 'center',
+        paddingVertical: 11,
+        marginBottom: 10,
+    },
+    secondaryBtnText: { color: '#374151', fontWeight: '700', fontSize: 14 },
+    disableBtn: {
+        backgroundColor: '#FEE2E2',
+        borderRadius: 10,
+        alignItems: 'center',
+        paddingVertical: 11,
+    },
+    disableBtnText: { color: '#B91C1C', fontWeight: '700', fontSize: 14 },
     empty: { textAlign: 'center', color: '#9CA3AF', padding: 20 },
     logoutBtn: {
         backgroundColor: '#fff',

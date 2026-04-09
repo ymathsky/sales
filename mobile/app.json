@@ -14,7 +14,8 @@
       "bundleIdentifier": "com.mdofficesupport.cashflow",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Cash Flow to select receipt photos for your transactions.",
-        "NSCameraUsageDescription": "Allow Cash Flow to take receipt photos for your transactions."
+        "NSCameraUsageDescription": "Allow Cash Flow to take receipt photos for your transactions.",
+        "NSFaceIDUsageDescription": "Allow Cash Flow to use Face ID to unlock the app securely."
       }
     },
     "android": {
@@ -23,6 +24,9 @@
         "backgroundColor": "#2563EB"
       },
       "package": "com.mdofficesupport.cashflow"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

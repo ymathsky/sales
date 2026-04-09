@@ -5,12 +5,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, ActivityIndicator } from 'react-native';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { LockProvider, useLock } from './src/context/LockContext';
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import TransactionsScreen from './src/screens/TransactionsScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import LockScreen from './src/screens/LockScreen';
 import { initializeFinancialAlerts } from './src/services/financialAlerts';
 
 const Stack = createNativeStackNavigator();
@@ -61,12 +63,30 @@ function MainTabs() {
 
 function AppNavigator() {
     const { user, loading } = useAuth();
+    const {
+        loading: lockLoading,
+        pinEnabled,
+        biometricEnabled,
+        isUnlocked,
+        unlockWithPin,
+        unlockWithBiometric,
+    } = useLock();
 
-    if (loading) {
+    if (loading || lockLoading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#2563EB' }}>
                 <ActivityIndicator size="large" color="#fff" />
             </View>
+        );
+    }
+
+    if (user && pinEnabled && !isUnlocked) {
+        return (
+            <LockScreen
+                biometricEnabled={biometricEnabled}
+                onUnlockPin={unlockWithPin}
+                onUnlockBiometric={unlockWithBiometric}
+            />
         );
     }
 
@@ -116,7 +136,9 @@ export default function App() {
 
     return (
         <AuthProvider>
-            <AppNavigator />
+            <LockProvider>
+                <AppNavigator />
+            </LockProvider>
         </AuthProvider>
     );
 }
