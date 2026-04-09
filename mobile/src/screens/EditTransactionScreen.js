@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
     Image,
-    ScrollView, Alert, ActivityIndicator
+    ScrollView, Alert, ActivityIndicator, Modal
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -56,6 +56,8 @@ export default function EditTransactionScreen() {
     const [existingReceipts, setExistingReceipts] = useState([]);
     const [selectedReceipts, setSelectedReceipts] = useState([]);
     const [receiptsLoading, setReceiptsLoading] = useState(false);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewUri, setPreviewUri] = useState('');
 
     useEffect(() => {
         setCategoriesLoading(true);
@@ -126,6 +128,17 @@ export default function EditTransactionScreen() {
 
     function removeReceipt(indexToRemove) {
         setSelectedReceipts(prev => prev.filter((_, index) => index !== indexToRemove));
+    }
+
+    function openPreview(uri) {
+        if (!uri) return;
+        setPreviewUri(uri);
+        setPreviewVisible(true);
+    }
+
+    function closePreview() {
+        setPreviewVisible(false);
+        setPreviewUri('');
     }
 
     async function handleSave() {
@@ -274,6 +287,21 @@ export default function EditTransactionScreen() {
                 <Text style={styles.receiptInfoText}>
                     {receiptsLoading ? 'Loading existing receipts...' : `${existingReceipts.length} existing photo(s)`}
                 </Text>
+
+                {existingReceipts.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.receiptPreviewRow}>
+                        {existingReceipts.map((receipt) => (
+                            <TouchableOpacity
+                                key={String(receipt.id)}
+                                style={styles.existingReceiptThumbWrap}
+                                onPress={() => openPreview(receipt.url)}
+                            >
+                                <Image source={{ uri: receipt.url }} style={styles.receiptThumb} />
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
+
                 <View style={styles.receiptActionRow}>
                     <TouchableOpacity style={[styles.receiptPickerBtn, styles.receiptActionBtn]} onPress={pickReceipts}>
                         <Text style={styles.receiptPickerText}>+ Gallery ({selectedReceipts.length}/{RECEIPT_LIMIT})</Text>
@@ -320,6 +348,22 @@ export default function EditTransactionScreen() {
                     }
                 </TouchableOpacity>
             </View>
+
+            <Modal
+                visible={previewVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={closePreview}
+            >
+                <View style={styles.previewOverlay}>
+                    <TouchableOpacity style={styles.previewCloseBtn} onPress={closePreview}>
+                        <Text style={styles.previewCloseText}>Close</Text>
+                    </TouchableOpacity>
+                    {previewUri ? (
+                        <Image source={{ uri: previewUri }} style={styles.previewImage} resizeMode="contain" />
+                    ) : null}
+                </View>
+            </Modal>
         </ScrollView>
     );
 }
@@ -382,6 +426,7 @@ const styles = StyleSheet.create({
     },
     receiptCameraText: { color: '#047857', fontWeight: '700', textAlign: 'center' },
     receiptPreviewRow: { marginBottom: 16 },
+    existingReceiptThumbWrap: { marginRight: 10 },
     receiptThumbWrap: { marginRight: 10, position: 'relative' },
     receiptThumb: { width: 78, height: 78, borderRadius: 10, backgroundColor: '#E5E7EB' },
     receiptRemoveBtn: {
@@ -411,4 +456,26 @@ const styles = StyleSheet.create({
     },
     deleteBtnText: { color: '#EF4444', fontWeight: '700', fontSize: 15 },
     disabled: { opacity: 0.6 },
+    previewOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+    },
+    previewCloseBtn: {
+        position: 'absolute',
+        top: 44,
+        right: 16,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 20,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+    },
+    previewCloseText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+    previewImage: {
+        width: '100%',
+        height: '80%',
+        borderRadius: 12,
+    },
 });
