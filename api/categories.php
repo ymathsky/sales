@@ -88,6 +88,31 @@ try {
     $categories = [];
 }
 
+if (empty($categories)) {
+    $incomeDefaults = ['Sales', 'Service Fee', 'Rental', 'Investment', 'Refund', 'Other'];
+    $expenseDefaults = ['Supplies', 'Utilities', 'Salary', 'Rent', 'Marketing', 'Transport', 'Maintenance', 'Other'];
+
+    $defaultsByType = [];
+    if ($type === 'in') {
+        foreach ($incomeDefaults as $name) {
+            $defaultsByType[] = ['category_id' => null, 'name' => $name, 'type' => 'in'];
+        }
+    } elseif ($type === 'out') {
+        foreach ($expenseDefaults as $name) {
+            $defaultsByType[] = ['category_id' => null, 'name' => $name, 'type' => 'out'];
+        }
+    } else {
+        foreach ($incomeDefaults as $name) {
+            $defaultsByType[] = ['category_id' => null, 'name' => $name, 'type' => 'in'];
+        }
+        foreach ($expenseDefaults as $name) {
+            $defaultsByType[] = ['category_id' => null, 'name' => $name, 'type' => 'out'];
+        }
+    }
+
+    $categories = $defaultsByType;
+}
+
 echo json_encode([
     'success' => true,
     'data'    => array_values($categories),
