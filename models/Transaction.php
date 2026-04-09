@@ -295,6 +295,56 @@ class Transaction {
         $stmt = executeQuery($sql, [$companyId, $startDate, $endDate]);
         return $stmt->fetchAll();
     }
+
+    /**
+     * Get monthly income/expense trend for the last N months
+     *
+     * @param int $companyId Company ID
+     * @param int $months Number of months to include (default 6)
+     * @return array Trend rows with month_label, income, expense
+     */
+    public static function getMonthlyTrend($companyId, $months = 6) {
+        $months = max(1, (int)$months);
+
+        $startDate = date('Y-m-01', strtotime('-' . ($months - 1) . ' months'));
+        $endDate = date('Y-m-t');
+
+        $sql = "SELECT 
+                    DATE_FORMAT(transaction_date, '%Y-%m') as month_key,
+                    SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END) as income,
+                    SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END) as expense
+                FROM transactions
+                WHERE company_id = ?
+                AND transaction_date BETWEEN ? AND ?
+                GROUP BY DATE_FORMAT(transaction_date, '%Y-%m')
+                ORDER BY month_key ASC";
+
+        $rows = executeQuery($sql, [$companyId, $startDate, $endDate])->fetchAll();
+
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[$row['month_key']] = [
+                'income' => (float)($row['income'] ?? 0),
+                'expense' => (float)($row['expense'] ?? 0),
+            ];
+        }
+
+        $result = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = strtotime('-' . $i . ' months');
+            $monthKey = date('Y-m', $date);
+            $monthLabel = date('M', $date);
+
+            $result[] = [
+                'month_key' => $monthKey,
+                'month_label' => $monthLabel,
+                'income' => $indexed[$monthKey]['income'] ?? 0,
+                'expense' => $indexed[$monthKey]['expense'] ?? 0,
+            ];
+        }
+
+        return $result;
+    }
     
     /**
      * Get categories for company

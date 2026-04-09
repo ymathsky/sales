@@ -46,7 +46,10 @@ $monthSummary = Transaction::getFinancialSummary($companyId, $monthStart, $month
 // 2. Get Recent Transactions (Last 5)
 $recentTransactions = Transaction::getByCompany($companyId, [], 5, 0);
 
-// 3. Get Company Info
+// 3. Get cash in/out trend (last 6 months)
+$monthlyTrend = Transaction::getMonthlyTrend($companyId, 6);
+
+// 4. Get Company Info
 $company = Company::getById($companyId);
 
 echo json_encode([
@@ -64,5 +67,6 @@ echo json_encode([
         'month_income' => (float)$monthSummary['total_income'],
         'month_expense' => (float)$monthSummary['total_expense']
     ],
+    'monthly_trend' => $monthlyTrend,
     'recent_transactions' => $recentTransactions
 ]);
