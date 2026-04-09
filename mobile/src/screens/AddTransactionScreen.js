@@ -7,6 +7,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { createTransaction, getCategories, uploadReceipts } from '../api/client';
+import { addTransactionDraft } from '../storage/offlineDrafts';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
 const RECEIPT_LIMIT = 20;
@@ -61,6 +62,26 @@ export default function AddTransactionScreen() {
             .finally(() => setCategoriesLoading(false));
     }, [type]);
 
+    function buildPayload() {
+        return {
+            type,
+            amount: parseFloat(amount),
+            transaction_date: date,
+            category: category || null,
+            description: description || null,
+            payment_method: paymentMethod,
+            reference_number: referenceNo || null,
+        };
+    }
+
+    function buildReceiptAssets() {
+        return selectedReceipts.map((asset, idx) => ({
+            uri: asset.uri,
+            fileName: asset.fileName || `receipt_${Date.now()}_${idx}.jpg`,
+            mimeType: asset.mimeType || 'image/jpeg',
+        }));
+    }
+
     async function handleSubmit() {
         if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
             Alert.alert('Validation Error', 'Please enter a valid amount');
@@ -73,15 +94,8 @@ export default function AddTransactionScreen() {
 
         setLoading(true);
         try {
-            const result = await createTransaction({
-                type,
-                amount: parseFloat(amount),
-                transaction_date: date,
-                category: category || null,
-                description: description || null,
-                payment_method: paymentMethod,
-                reference_number: referenceNo || null,
-            });
+            const payload = buildPayload();
+            const result = await createTransaction(payload);
 
             if (result.success) {
                 let uploadSummary = '';
@@ -102,10 +116,31 @@ export default function AddTransactionScreen() {
                 Alert.alert('Error', result.error || 'Failed to create transaction');
             }
         } catch (e) {
-            Alert.alert('Error', 'Network error. Please try again.');
+            const payload = buildPayload();
+            const receiptAssets = buildReceiptAssets();
+            await addTransactionDraft({ payload, receiptAssets });
+            Alert.alert('Saved Offline', 'No internet detected. Transaction was saved as a local draft and will sync automatically once you are online.');
+            resetForm();
         } finally {
             setLoading(false);
         }
+    }
+
+    async function handleSaveDraft() {
+        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            Alert.alert('Validation Error', 'Please enter a valid amount before saving draft.');
+            return;
+        }
+        if (!date) {
+            Alert.alert('Validation Error', 'Please enter a date before saving draft.');
+            return;
+        }
+
+        const payload = buildPayload();
+        const receiptAssets = buildReceiptAssets();
+        await addTransactionDraft({ payload, receiptAssets });
+        Alert.alert('Draft Saved', 'Transaction draft saved locally. It will sync automatically when online.');
+        resetForm();
     }
 
     function resetForm() {
@@ -285,6 +320,14 @@ export default function AddTransactionScreen() {
                         : <Text style={styles.submitBtnText}>Save {type === 'in' ? 'Income' : 'Expense'}</Text>
                     }
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.draftBtn}
+                    onPress={handleSaveDraft}
+                    disabled={loading}
+                >
+                    <Text style={styles.draftBtnText}>Save Offline Draft</Text>
+                </TouchableOpacity>
             </View>
         </ScrollView>
     );
@@ -384,4 +427,13 @@ const styles = StyleSheet.create({
     submitBtnExpense: { backgroundColor: '#EF4444' },
     submitBtnDisabled: { opacity: 0.6 },
     submitBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    draftBtn: {
+        backgroundColor: '#E5E7EB',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: -28,
+        marginBottom: 40,
+    },
+    draftBtnText: { color: '#374151', fontWeight: '700', fontSize: 15 },
 });
