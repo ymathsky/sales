@@ -6,6 +6,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getDashboard } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { checkFinancialAlerts } from '../services/financialAlerts';
 
 function SummaryCard({ label, amount, color, emoji }) {
     return (
@@ -28,7 +29,12 @@ export default function DashboardScreen() {
     const load = useCallback(async () => {
         try {
             const result = await getDashboard();
-            if (result.success) setData(result);
+            if (result.success) {
+                setData(result);
+                checkFinancialAlerts(result).catch(() => {
+                    // Notification check failure should not block dashboard rendering.
+                });
+            }
         } catch (e) {
             console.error(e);
         } finally {

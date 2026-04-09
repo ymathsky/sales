@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -11,6 +11,7 @@ import TransactionsScreen from './src/screens/TransactionsScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import { initializeFinancialAlerts } from './src/services/financialAlerts';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -107,6 +108,12 @@ function AppNavigator() {
 }
 
 export default function App() {
+    useEffect(() => {
+        initializeFinancialAlerts().catch(() => {
+            // Non-blocking: app should continue even if notification permission/setup fails.
+        });
+    }, []);
+
     return (
         <AuthProvider>
             <AppNavigator />
