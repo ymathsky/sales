@@ -4,12 +4,21 @@ import {
     Image,
     ScrollView, Alert, ActivityIndicator, Modal
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { updateTransaction, deleteTransaction, getCategories, getReceipts, uploadReceipts, deleteReceipt } from '../api/client';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
 const RECEIPT_LIMIT = 20;
+const CATEGORY_CACHE_KEY_PREFIX = 'category_cache_';
+
+function defaultCategoriesByType(type) {
+    if (type === 'in') {
+        return ['Sales', 'Service Fee', 'Rental', 'Investment', 'Refund', 'Other'];
+    }
+    return ['Supplies', 'Utilities', 'Salary', 'Rent', 'Marketing', 'Transport', 'Maintenance', 'Other'];
+}
 
 function FieldLabel({ text, required }) {
     return (
@@ -61,13 +70,40 @@ export default function EditTransactionScreen() {
     const [previewUri, setPreviewUri] = useState('');
 
     useEffect(() => {
-        setCategoriesLoading(true);
-        getCategories(type)
-            .then(res => {
-                if (res.success) setCategories(res.data.map(c => c.name));
-            })
-            .catch(() => {})
-            .finally(() => setCategoriesLoading(false));
+        const loadCategories = async () => {
+            setCategoriesLoading(true);
+            const cacheKey = `${CATEGORY_CACHE_KEY_PREFIX}${type}`;
+
+            try {
+                const res = await getCategories(type);
+                const names = res?.success ? res.data.map(c => c.name) : [];
+
+                if (names.length > 0) {
+                    setCategories(names);
+                    await AsyncStorage.setItem(cacheKey, JSON.stringify(names));
+                    return;
+                }
+            } catch {
+                // Fallback to cache/defaults below.
+            }
+
+            try {
+                const cached = await AsyncStorage.getItem(cacheKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setCategories(parsed);
+                        return;
+                    }
+                }
+            } catch {
+                // Ignore cache parse errors and use defaults.
+            }
+
+            setCategories(defaultCategoriesByType(type));
+        };
+
+        loadCategories().finally(() => setCategoriesLoading(false));
     }, [type]);
 
     useEffect(() => {
