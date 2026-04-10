@@ -71,6 +71,12 @@ if (!userHasAccessToCompany(getCurrentUserId(), $companyId)) {
     exit;
 }
 
+if (!hasPermission('manage_invoices')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Permission denied']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $filters = [
         'status' => $_GET['status'] ?? null,

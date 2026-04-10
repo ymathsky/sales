@@ -345,6 +345,138 @@ class Transaction {
 
         return $result;
     }
+
+    /**
+     * Get top categories by amount for a date range
+     *
+     * @param int $companyId Company ID
+     * @param string|null $startDate Start date (Y-m-d)
+     * @param string|null $endDate End date (Y-m-d)
+     * @param int $limit Max rows
+     * @return array
+     */
+    public static function getTopCategories($companyId, $startDate = null, $endDate = null, $limit = 5) {
+        $limit = max(1, (int)$limit);
+
+        $sql = "SELECT
+                    COALESCE(NULLIF(category, ''), 'Uncategorized') as category,
+                    SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END) as income,
+                    SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END) as expense,
+                    SUM(CASE WHEN type = 'in' THEN amount ELSE -amount END) as net,
+                    COUNT(*) as transaction_count
+                FROM transactions
+                WHERE company_id = ?";
+
+        $params = [$companyId];
+
+        if ($startDate) {
+            $sql .= " AND transaction_date >= ?";
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= " AND transaction_date <= ?";
+            $params[] = $endDate;
+        }
+
+        $sql .= " GROUP BY COALESCE(NULLIF(category, ''), 'Uncategorized')
+                  ORDER BY ABS(net) DESC, transaction_count DESC
+                  LIMIT ?";
+
+        $params[] = $limit;
+
+        return executeQuery($sql, $params)->fetchAll();
+    }
+
+    /**
+     * Get daily sales trend (income transactions) for the past N days
+     *
+     * @param int $companyId Company ID
+     * @param int $days Number of days
+     * @return array
+     */
+    public static function getDailySalesTrend($companyId, $days = 14) {
+        $days = max(1, (int)$days);
+
+        $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+        $endDate = date('Y-m-d');
+
+        $sql = "SELECT
+                    DATE(transaction_date) as trend_date,
+                    SUM(amount) as sales_amount,
+                    COUNT(*) as sales_count
+                FROM transactions
+                WHERE company_id = ?
+                  AND type = 'in'
+                  AND transaction_date BETWEEN ? AND ?
+                GROUP BY DATE(transaction_date)
+                ORDER BY trend_date ASC";
+
+        $rows = executeQuery($sql, [$companyId, $startDate, $endDate])->fetchAll();
+
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[$row['trend_date']] = [
+                'sales_amount' => (float)($row['sales_amount'] ?? 0),
+                'sales_count' => (int)($row['sales_count'] ?? 0),
+            ];
+        }
+
+        $result = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime('-' . $i . ' days'));
+            $result[] = [
+                'date' => $date,
+                'label' => date('M d', strtotime($date)),
+                'sales_amount' => $indexed[$date]['sales_amount'] ?? 0,
+                'sales_count' => $indexed[$date]['sales_count'] ?? 0,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get current vs previous month comparison
+     *
+     * @param int $companyId Company ID
+     * @return array
+     */
+    public static function getMonthComparison($companyId) {
+        $currentStart = date('Y-m-01');
+        $currentEnd = date('Y-m-t');
+        $previousStart = date('Y-m-01', strtotime('-1 month'));
+        $previousEnd = date('Y-m-t', strtotime('-1 month'));
+
+        $current = self::getFinancialSummary($companyId, $currentStart, $currentEnd);
+        $previous = self::getFinancialSummary($companyId, $previousStart, $previousEnd);
+
+        $currentNet = (float)($current['net_balance'] ?? 0);
+        $previousNet = (float)($previous['net_balance'] ?? 0);
+
+        $changeAmount = $currentNet - $previousNet;
+        $changePct = 0;
+        if (abs($previousNet) > 0.00001) {
+            $changePct = ($changeAmount / $previousNet) * 100;
+        }
+
+        return [
+            'current_month_label' => date('F Y'),
+            'previous_month_label' => date('F Y', strtotime('-1 month')),
+            'current' => [
+                'income' => (float)($current['total_income'] ?? 0),
+                'expense' => (float)($current['total_expense'] ?? 0),
+                'net' => $currentNet,
+            ],
+            'previous' => [
+                'income' => (float)($previous['total_income'] ?? 0),
+                'expense' => (float)($previous['total_expense'] ?? 0),
+                'net' => $previousNet,
+            ],
+            'net_change_amount' => $changeAmount,
+            'net_change_pct' => $changePct,
+        ];
+    }
     
     /**
      * Get categories for company

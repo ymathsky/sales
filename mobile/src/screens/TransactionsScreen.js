@@ -9,6 +9,7 @@ import * as Print from 'expo-print';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getTransactions } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 const TYPE_FILTERS = [
     { label: 'All', value: '' },
@@ -81,6 +82,7 @@ function TransactionRow({ item, onPress }) {
 
 export default function TransactionsScreen() {
     const navigation = useNavigation();
+    const { can } = useAuth();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -416,7 +418,11 @@ export default function TransactionsScreen() {
                 renderItem={({ item }) => (
                     <TransactionRow
                         item={item}
-                        onPress={() => navigation.navigate('EditTransaction', { transaction: item })}
+                        onPress={() => {
+                            if (can('edit_transactions')) {
+                                navigation.navigate('EditTransaction', { transaction: item });
+                            }
+                        }}
                     />
                 )}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -429,13 +435,15 @@ export default function TransactionsScreen() {
                 contentContainerStyle={{ paddingBottom: 20 }}
             />
 
-            <TouchableOpacity
-                style={styles.fabFloating}
-                onPress={() => navigation.navigate('CreateTransaction')}
-                activeOpacity={0.9}
-            >
-                <Text style={styles.fabFloatingText}>+ Add</Text>
-            </TouchableOpacity>
+            {can('create_transactions') && (
+                <TouchableOpacity
+                    style={styles.fabFloating}
+                    onPress={() => navigation.navigate('CreateTransaction')}
+                    activeOpacity={0.9}
+                >
+                    <Text style={styles.fabFloatingText}>+ Add</Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 }

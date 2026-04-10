@@ -36,6 +36,12 @@ if (!userHasAccessToCompany(getCurrentUserId(), $companyId)) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && !hasPermission('view_dashboard')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Permission denied']);
+    exit;
+}
+
 // GET: List Transactions
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $page = $_GET['page'] ?? 1;
@@ -66,6 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 // POST: Create Transaction
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!hasPermission('create_transactions')) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Permission denied']);
+        exit;
+    }
     
     // Validation
     $required = ['type', 'amount', 'transaction_date'];
@@ -82,6 +94,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Write access denied']);
         exit;
+    }
+
+    // Cashier safety: only allow sales entry (income + Sales category)
+    if (getCurrentUserRole() === 'cashier') {
+        $trxType = $input['type'] ?? '';
+        $trxCategory = trim((string)($input['category'] ?? ''));
+        $isSalesCategory = ($trxCategory === '' || strcasecmp($trxCategory, 'Sales') === 0);
+
+        if ($trxType !== 'in' || !$isSalesCategory || !hasPermission('create_sales')) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Cashier can only create sales transactions']);
+            exit;
+        }
     }
 
     try {
@@ -114,6 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // PUT: Update Transaction
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+        if (!hasPermission('edit_transactions')) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Permission denied']);
+            exit;
+        }
+
     $transactionId = $_GET['id'] ?? null;
     if (!$transactionId) {
         http_response_code(400);
@@ -168,6 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
 // DELETE: Delete Transaction
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        if (!hasPermission('delete_transactions')) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Permission denied']);
+            exit;
+        }
+
     $transactionId = $_GET['id'] ?? null;
     if (!$transactionId) {
         http_response_code(400);

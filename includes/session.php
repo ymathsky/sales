@@ -169,22 +169,111 @@ function hasPermission($permission) {
     // Admin role always has access (hard override)
     if ($role === 'admin') return true;
     
-    require_once __DIR__ . '/../config/database.php';
-    
-    // Static cache processing per request to avoid multiple DB calls
-    static $permissionsCache = [];
-    if (isset($permissionsCache[$role][$permission])) {
-        return $permissionsCache[$role][$permission];
+    $permissions = getCurrentPermissions();
+    return !empty($permissions[$permission]);
+}
+
+/**
+ * Resolve current user permissions from defaults + role table + user overrides.
+ *
+ * @return array<string,bool>
+ */
+function getCurrentPermissions() {
+    $role = getCurrentUserRole();
+    $userId = getCurrentUserId();
+
+    if (!$role || !$userId) {
+        return [];
     }
 
-    $sql = "SELECT is_granted FROM role_permissions WHERE role = ? AND permission_key = ?";
-    $stmt = executeQuery($sql, [$role, $permission]);
-    $result = $stmt->fetch();
-    
-    $isGranted = ($result && $result['is_granted'] == 1);
-    $permissionsCache[$role][$permission] = $isGranted;
-    
-    return $isGranted;
+    static $cache = [];
+    $cacheKey = $role . ':' . $userId;
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
+
+    $permissions = getDefaultRolePermissions($role);
+
+    try {
+        $sql = "SELECT permission_key, is_granted FROM role_permissions WHERE role = ?";
+        $rows = executeQuery($sql, [$role])->fetchAll();
+        if (!empty($rows)) {
+            foreach ($rows as $row) {
+                $permissions[$row['permission_key']] = ((int)$row['is_granted'] === 1);
+            }
+        }
+    } catch (Throwable $e) {
+        // Ignore role_permissions table issues and keep defaults.
+    }
+
+    try {
+        $sql = "SELECT permission_key, is_granted FROM user_permissions WHERE user_id = ?";
+        $rows = executeQuery($sql, [$userId])->fetchAll();
+        if (!empty($rows)) {
+            foreach ($rows as $row) {
+                $permissions[$row['permission_key']] = ((int)$row['is_granted'] === 1);
+            }
+        }
+    } catch (Throwable $e) {
+        // Ignore user override table issues.
+    }
+
+    $cache[$cacheKey] = $permissions;
+    return $permissions;
+}
+
+/**
+ * Baseline permission matrix by role.
+ *
+ * @param string $role
+ * @return array<string,bool>
+ */
+function getDefaultRolePermissions($role) {
+    $all = [
+        'view_dashboard',
+        'create_sales',
+        'create_transactions',
+        'edit_transactions',
+        'delete_transactions',
+        'manage_customers',
+        'manage_invoices',
+        'edit_categories',
+        'view_reports',
+        'manage_users',
+        'manage_settings',
+    ];
+
+    $denyAll = array_fill_keys($all, false);
+
+    $roleMap = [
+        'owner' => array_fill_keys($all, true),
+        'admin' => array_fill_keys($all, true),
+        'accounting' => array_merge($denyAll, [
+            'view_dashboard' => true,
+            'create_sales' => true,
+            'create_transactions' => true,
+            'edit_transactions' => true,
+            'delete_transactions' => true,
+            'manage_customers' => true,
+            'manage_invoices' => true,
+            'edit_categories' => true,
+            'view_reports' => true,
+        ]),
+        'cashier' => array_merge($denyAll, [
+            'view_dashboard' => true,
+            'create_sales' => true,
+            'create_transactions' => true,
+        ]),
+    ];
+
+    if (isset($roleMap[$role])) {
+        return $roleMap[$role];
+    }
+
+    return array_merge($denyAll, [
+        'view_dashboard' => true,
+        'create_transactions' => true,
+    ]);
 }
 
 /**

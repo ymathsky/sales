@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../models/Transaction.php';
 require_once __DIR__ . '/../models/Company.php';
+require_once __DIR__ . '/../models/Invoice.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -49,11 +50,39 @@ $recentTransactions = Transaction::getByCompany($companyId, [], 5, 0);
 // 3. Get cash in/out trend (last 6 months)
 $monthlyTrend = Transaction::getMonthlyTrend($companyId, 6);
 
-// 4. Get Company Info
+// 4. Enhanced analytics
+$dailySalesTrend = Transaction::getDailySalesTrend($companyId, 14);
+$topCategories = Transaction::getTopCategories($companyId, $monthStart, $monthEnd, 5);
+$monthlyComparison = Transaction::getMonthComparison($companyId);
+
+$topCustomers = [];
+$unpaidInvoices = [
+    'unpaid_count' => 0,
+    'unpaid_total' => 0,
+    'overdue_count' => 0,
+    'overdue_total' => 0,
+];
+
+try {
+    $topCustomers = Invoice::getTopCustomersByRevenue($companyId, $monthStart, $monthEnd, 5);
+    $unpaidInvoices = Invoice::getUnpaidSummary($companyId);
+} catch (Throwable $e) {
+    // Keep dashboard resilient even if invoice modules/tables are unavailable.
+}
+
+// 5. Get Company Info
 $company = Company::getById($companyId);
+$permissions = getCurrentPermissions();
 
 echo json_encode([
     'success' => true,
+    'user' => [
+        'user_id' => getCurrentUserId(),
+        'username' => $_SESSION['username'] ?? null,
+        'full_name' => getCurrentUserName(),
+        'role' => getCurrentUserRole(),
+    ],
+    'permissions' => $permissions,
     'company' => [
         'company_id' => $company['company_id'],
         'name' => $company['name'],
@@ -68,5 +97,10 @@ echo json_encode([
         'month_expense' => (float)$monthSummary['total_expense']
     ],
     'monthly_trend' => $monthlyTrend,
+    'daily_sales_trend' => $dailySalesTrend,
+    'top_categories' => $topCategories,
+    'top_customers' => $topCustomers,
+    'monthly_comparison' => $monthlyComparison,
+    'unpaid_invoices' => $unpaidInvoices,
     'recent_transactions' => $recentTransactions
 ]);

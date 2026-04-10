@@ -263,4 +263,71 @@ class Invoice {
         
         return 'INV-' . str_pad($number, 6, '0', STR_PAD_LEFT);
     }
+
+    /**
+     * Get top customers by invoiced amount within a period
+     *
+     * @param int $companyId Company ID
+     * @param string|null $startDate Start date
+     * @param string|null $endDate End date
+     * @param int $limit Max rows
+     * @return array
+     */
+    public static function getTopCustomersByRevenue($companyId, $startDate = null, $endDate = null, $limit = 5) {
+        $limit = max(1, (int)$limit);
+
+        $sql = "SELECT
+                    c.customer_id,
+                    c.customer_name,
+                    COUNT(i.invoice_id) as invoice_count,
+                    SUM(i.total_amount) as total_invoiced,
+                    SUM(i.amount_due) as total_due
+                FROM invoices i
+                INNER JOIN customers c ON c.customer_id = i.customer_id
+                WHERE i.company_id = ?";
+
+        $params = [$companyId];
+
+        if ($startDate) {
+            $sql .= " AND i.invoice_date >= ?";
+            $params[] = $startDate;
+        }
+
+        if ($endDate) {
+            $sql .= " AND i.invoice_date <= ?";
+            $params[] = $endDate;
+        }
+
+        $sql .= " GROUP BY c.customer_id, c.customer_name
+                  ORDER BY total_invoiced DESC
+                  LIMIT ?";
+        $params[] = $limit;
+
+        return executeQuery($sql, $params)->fetchAll();
+    }
+
+    /**
+     * Get unpaid invoice summary for a company
+     *
+     * @param int $companyId Company ID
+     * @return array
+     */
+    public static function getUnpaidSummary($companyId) {
+        $sql = "SELECT
+                    COUNT(CASE WHEN amount_due > 0.009 THEN 1 END) as unpaid_count,
+                    COALESCE(SUM(CASE WHEN amount_due > 0.009 THEN amount_due ELSE 0 END), 0) as unpaid_total,
+                    COUNT(CASE WHEN amount_due > 0.009 AND due_date < CURDATE() THEN 1 END) as overdue_count,
+                    COALESCE(SUM(CASE WHEN amount_due > 0.009 AND due_date < CURDATE() THEN amount_due ELSE 0 END), 0) as overdue_total
+                FROM invoices
+                WHERE company_id = ?";
+
+        $row = executeQuery($sql, [$companyId])->fetch();
+
+        return [
+            'unpaid_count' => (int)($row['unpaid_count'] ?? 0),
+            'unpaid_total' => (float)($row['unpaid_total'] ?? 0),
+            'overdue_count' => (int)($row['overdue_count'] ?? 0),
+            'overdue_total' => (float)($row['overdue_total'] ?? 0),
+        ];
+    }
 }

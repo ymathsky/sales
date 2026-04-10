@@ -9,8 +9,13 @@ import { LockProvider, useLock } from './src/context/LockContext';
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import TransactionsScreen from './src/screens/TransactionsScreen';
+import CustomersScreen from './src/screens/CustomersScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
+import POSQuickEntryScreen from './src/screens/POSQuickEntryScreen';
+import CustomerFormScreen from './src/screens/CustomerFormScreen';
+import InvoiceFormScreen from './src/screens/InvoiceFormScreen';
+import InvoicesScreen from './src/screens/InvoicesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LockScreen from './src/screens/LockScreen';
 import { initializeFinancialAlerts } from './src/services/financialAlerts';
@@ -19,6 +24,8 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
+    const { can } = useAuth();
+
     return (
         <Tab.Navigator
             screenOptions={{
@@ -48,6 +55,17 @@ function MainTabs() {
                     tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
                 }}
             />
+            {can('manage_customers') && (
+                <Tab.Screen
+                    name="Customers"
+                    component={CustomersScreen}
+                    options={{
+                        headerShown: false,
+                        tabBarLabel: 'Customers',
+                        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🧾</Text>,
+                    }}
+                />
+            )}
             <Tab.Screen
                 name="Profile"
                 component={ProfileScreen}
@@ -63,6 +81,7 @@ function MainTabs() {
 
 function AppNavigator() {
     const { user, loading } = useAuth();
+    const { can } = useAuth();
     const {
         loading: lockLoading,
         pinEnabled,
@@ -120,6 +139,56 @@ function AppNavigator() {
                                 headerTitleStyle: { fontWeight: 'bold' },
                             }}
                         />
+                        <Stack.Screen
+                            name="POSQuickEntry"
+                            component={POSQuickEntryScreen}
+                            options={{
+                                headerShown: true,
+                                title: 'POS Quick Entry',
+                                headerStyle: { backgroundColor: '#111827' },
+                                headerTintColor: '#fff',
+                                headerTitleStyle: { fontWeight: 'bold' },
+                            }}
+                        />
+                        {can('manage_customers') && (
+                            <Stack.Screen
+                                name="CustomerForm"
+                                component={CustomerFormScreen}
+                                options={{
+                                    headerShown: true,
+                                    title: 'Customer',
+                                    headerStyle: { backgroundColor: '#2563EB' },
+                                    headerTintColor: '#fff',
+                                    headerTitleStyle: { fontWeight: 'bold' },
+                                }}
+                            />
+                        )}
+                        {can('manage_invoices') && (
+                            <Stack.Screen
+                                name="InvoiceForm"
+                                component={InvoiceFormScreen}
+                                options={{
+                                    headerShown: true,
+                                    title: 'Create Invoice',
+                                    headerStyle: { backgroundColor: '#111827' },
+                                    headerTintColor: '#fff',
+                                    headerTitleStyle: { fontWeight: 'bold' },
+                                }}
+                            />
+                        )}
+                        {can('manage_invoices') && (
+                            <Stack.Screen
+                                name="Invoices"
+                                component={InvoicesScreen}
+                                options={{
+                                    headerShown: true,
+                                    title: 'Invoices',
+                                    headerStyle: { backgroundColor: '#1D4ED8' },
+                                    headerTintColor: '#fff',
+                                    headerTitleStyle: { fontWeight: 'bold' },
+                                }}
+                            />
+                        )}
                     </>
                 )}
             </Stack.Navigator>

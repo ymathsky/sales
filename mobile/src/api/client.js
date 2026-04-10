@@ -66,6 +66,11 @@ export async function logout() {
     await AsyncStorage.removeItem(SESSION_KEY);
 }
 
+export async function getPermissions() {
+    const res = await apiRequest('/permissions.php');
+    return parseApiResponse(res);
+}
+
 // =========================================
 // Dashboard
 // =========================================
@@ -159,6 +164,11 @@ export async function getCustomers(params = {}) {
     return parseApiResponse(res);
 }
 
+export async function getCustomer(id) {
+    const res = await apiRequest(`/customers.php?id=${id}`);
+    return parseApiResponse(res);
+}
+
 export async function createCustomer(data) {
     const res = await apiRequest('/customers.php', {
         method: 'POST',
@@ -167,9 +177,24 @@ export async function createCustomer(data) {
     return parseApiResponse(res);
 }
 
+export async function updateCustomer(id, data) {
+    const res = await apiRequest(`/customers.php?id=${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+    return parseApiResponse(res);
+}
+
 // =========================================
 // Invoices
 // =========================================
+
+export async function getInvoices(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query ? `/invoices.php?${query}` : '/invoices.php';
+    const res = await apiRequest(endpoint);
+    return parseApiResponse(res);
+}
 
 export async function createInvoice(data) {
     const res = await apiRequest('/invoices.php', {

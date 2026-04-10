@@ -71,6 +71,12 @@ if (!userHasAccessToCompany(getCurrentUserId(), $companyId)) {
     exit;
 }
 
+if (!hasPermission('manage_customers')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Permission denied']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $customerId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 

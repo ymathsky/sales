@@ -64,6 +64,7 @@ if ($user) {
             'full_name' => $user['full_name'],
             'role' => $user['role']
         ],
+        'permissions' => getCurrentPermissions(),
         'active_company_id' => $activeCompanyId,
         'companies' => $companies,
         'session_id' => session_id() // Useful for debugging, but cookie usually handles this
