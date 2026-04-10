@@ -9,6 +9,40 @@ require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../models/Invoice.php';
 require_once __DIR__ . '/../models/Customer.php';
 
+ob_start();
+register_shutdown_function(function () {
+    $buffer = ob_get_contents();
+    if ($buffer === false) {
+        return;
+    }
+
+    $trimmed = trim($buffer);
+    if ($trimmed === '') {
+        ob_end_flush();
+        return;
+    }
+
+    json_decode($trimmed, true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+        ob_end_flush();
+        return;
+    }
+
+    if (!headers_sent()) {
+        if (http_response_code() < 400) {
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+    }
+
+    ob_clean();
+    echo json_encode([
+        'success' => false,
+        'error' => $trimmed,
+    ]);
+    ob_end_flush();
+});
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
