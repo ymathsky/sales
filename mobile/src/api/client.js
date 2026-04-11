@@ -58,7 +58,13 @@ export async function login(username, password) {
         method: 'POST',
         body: JSON.stringify({ username, password }),
     });
-    return parseApiResponse(res);
+    const data = await parseApiResponse(res);
+    // React Native's fetch does not expose set-cookie headers.
+    // The login endpoint returns session_id in the JSON body — use that directly.
+    if (data.success && data.session_id) {
+        await AsyncStorage.setItem(SESSION_KEY, `PHPSESSID=${data.session_id}`);
+    }
+    return data;
 }
 
 export async function logout() {
@@ -224,7 +230,7 @@ export async function getCompanies() {
 }
 
 export async function switchCompany(companyId) {
-    const res = await apiRequest('/companies.php', {
+    const res = await apiRequest('/switch-company.php', {
         method: 'POST',
         body: JSON.stringify({ company_id: companyId }),
     });
