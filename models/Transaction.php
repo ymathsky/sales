@@ -380,7 +380,7 @@ class Transaction {
         }
 
         $sql .= " GROUP BY COALESCE(NULLIF(category, ''), 'Uncategorized')
-                  ORDER BY ABS(net) DESC, transaction_count DESC
+                  ORDER BY ABS(SUM(CASE WHEN type = 'in' THEN amount ELSE -amount END)) DESC, COUNT(*) DESC
                   LIMIT ?";
 
         $params[] = $limit;
