@@ -37,14 +37,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'mark_sent') {
-        if (Invoice::updateStatus($invoiceId, 'sent')) {
+        if (Invoice::updateStatus($invoiceId, $companyId, 'sent')) {
             $success = 'Invoice marked as sent.';
             $invoice['status'] = 'sent';
         } else {
             $errors[] = 'Failed to update invoice status.';
         }
     } elseif ($action === 'mark_paid') {
-        if (Invoice::updateStatus($invoiceId, 'paid')) {
+        if (Invoice::updateStatus($invoiceId, $companyId, 'paid')) {
             $success = 'Invoice marked as paid.';
             $invoice['status'] = 'paid';
             $invoice['amount_paid'] = $invoice['total_amount'];
@@ -66,13 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (Invoice::recordPayment($invoiceId, $amount, $paymentDate, $paymentMethod, $notes)) {
                 $success = 'Payment recorded successfully.';
                 // Refresh invoice
-                $invoice = Invoice::getById($invoiceId);
+                $invoice = Invoice::getById($invoiceId, $companyId);
             } else {
                 $errors[] = 'Failed to record payment.';
             }
         }
     } elseif ($action === 'cancel') {
-        if (Invoice::updateStatus($invoiceId, 'cancelled')) {
+        if (Invoice::updateStatus($invoiceId, $companyId, 'cancelled')) {
             $success = 'Invoice cancelled.';
             $invoice['status'] = 'cancelled';
         } else {
