@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    FlatList,
     KeyboardAvoidingView,
+    Modal,
     Platform,
     ScrollView,
     StyleSheet,
@@ -38,6 +40,7 @@ export default function InvoiceFormScreen({ navigation, route }) {
     const [loadingCustomers, setLoadingCustomers] = useState(true);
     const [saving, setSaving] = useState(false);
     const [selectedCustomerId, setSelectedCustomerId] = useState(initialCustomer?.customer_id || null);
+    const [showCustomerPicker, setShowCustomerPicker] = useState(false);
     const [invoiceDate, setInvoiceDate] = useState(today);
     const [dueDate, setDueDate] = useState(addDays(today, Number(initialCustomer?.payment_terms || 30)));
     const [notes, setNotes] = useState('');
@@ -45,17 +48,17 @@ export default function InvoiceFormScreen({ navigation, route }) {
     const [items, setItems] = useState([{ description: '', quantity: '1', unit_price: '' }]);
 
     useEffect(() => {
-        navigation.setOptions({ title: 'New Invoice' });
+        navigation.setOptions({ title: 'Create Invoice' });
     }, [navigation]);
 
     useEffect(() => {
         getCustomers()
             .then(result => {
                 if (!result.success) throw new Error(result.error || 'Failed to load customers.');
-                const loadedCustomers = result.data || [];
-                setCustomers(loadedCustomers);
-                if (!selectedCustomerId && loadedCustomers.length > 0) {
-                    const first = loadedCustomers[0];
+                const loaded = result.data || [];
+                setCustomers(loaded);
+                if (!selectedCustomerId && loaded.length > 0) {
+                    const first = loaded[0];
                     setSelectedCustomerId(first.customer_id);
                     setDueDate(addDays(today, Number(first.payment_terms || 30)));
                 }
@@ -64,9 +67,12 @@ export default function InvoiceFormScreen({ navigation, route }) {
             .finally(() => setLoadingCustomers(false));
     }, []);
 
+    const selectedCustomer = customers.find(c => c.customer_id === selectedCustomerId) || null;
+
     function selectCustomer(customer) {
         setSelectedCustomerId(customer.customer_id);
         setDueDate(addDays(invoiceDate, Number(customer.payment_terms || 30)));
+        setShowCustomerPicker(false);
     }
 
     function updateItem(index, key, value) {
@@ -84,18 +90,15 @@ export default function InvoiceFormScreen({ navigation, route }) {
     }
 
     const subtotal = items.reduce((sum, item) => {
-        const qty = parseFloat(item.quantity || '0') || 0;
-        const price = parseFloat(item.unit_price || '0') || 0;
-        return sum + qty * price;
+        return sum + (parseFloat(item.quantity || '0') || 0) * (parseFloat(item.unit_price || '0') || 0);
     }, 0);
-    const total = subtotal; // Tax is 0%
+    const total = subtotal;
 
     async function handleSave() {
         if (!selectedCustomerId) {
             Alert.alert('Validation', 'Please select a customer.');
             return;
         }
-
         const normalizedItems = items
             .map(item => ({
                 description: item.description.trim(),
@@ -103,18 +106,15 @@ export default function InvoiceFormScreen({ navigation, route }) {
                 unit_price: parseFloat(item.unit_price || '0') || 0,
             }))
             .filter(item => item.description || item.quantity > 0 || item.unit_price > 0);
-
         if (normalizedItems.length === 0) {
             Alert.alert('Validation', 'Add at least one line item.');
             return;
         }
-
         const invalid = normalizedItems.find(item => !item.description || item.quantity <= 0 || item.unit_price < 0);
         if (invalid) {
             Alert.alert('Validation', 'Each item needs a description, quantity > 0, and a valid unit price.');
             return;
         }
-
         setSaving(true);
         try {
             const result = await createInvoice({
@@ -145,173 +145,188 @@ export default function InvoiceFormScreen({ navigation, route }) {
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-                {/* ── Invoice Details ── */}
+                {/* â”€â”€ Invoice Details â”€â”€ */}
                 <View style={styles.card}>
-                    <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>Invoice Details</Text>
-                    </View>
-                    <View style={styles.cardBody}>
-                        <Text style={styles.label}>Customer</Text>
-                        {loadingCustomers ? (
-                            <ActivityIndicator color="#1E3A8A" style={{ marginVertical: 12 }} />
-                        ) : (
-                            <View style={styles.chipWrap}>
-                                {customers.map(c => (
-                                    <TouchableOpacity
-                                        key={c.customer_id}
-                                        style={[styles.chip, selectedCustomerId === c.customer_id && styles.chipActive]}
-                                        onPress={() => selectCustomer(c)}
-                                    >
-                                        <Text style={[styles.chipText, selectedCustomerId === c.customer_id && styles.chipTextActive]}>
-                                            {c.customer_name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        )}
+                    <Text style={styles.sectionTitle}>Invoice Details</Text>
 
-                        <View style={styles.dateRow}>
-                            <View style={styles.col}>
-                                <Text style={styles.label}>Invoice Date</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={invoiceDate}
-                                    onChangeText={text => {
-                                        setInvoiceDate(text);
-                                        const sel = customers.find(c => c.customer_id === selectedCustomerId);
-                                        if (sel) setDueDate(addDays(text, Number(sel.payment_terms || 30)));
-                                    }}
-                                    placeholder="YYYY-MM-DD"
-                                    placeholderTextColor="#94A3B8"
-                                />
-                            </View>
-                            <View style={styles.col}>
-                                <Text style={styles.label}>Due Date</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={dueDate}
-                                    onChangeText={setDueDate}
-                                    placeholder="YYYY-MM-DD"
-                                    placeholderTextColor="#94A3B8"
-                                />
-                            </View>
-                        </View>
-                    </View>
+                    <Text style={styles.label}>Customer <Text style={styles.required}>*</Text></Text>
+                    {loadingCustomers ? (
+                        <ActivityIndicator color="#1E3A8A" style={{ marginVertical: 12 }} />
+                    ) : (
+                        <TouchableOpacity style={styles.select} onPress={() => setShowCustomerPicker(true)} activeOpacity={0.7}>
+                            <Text style={selectedCustomer ? styles.selectText : styles.selectPlaceholder}>
+                                {selectedCustomer ? selectedCustomer.customer_name : 'Select Customer'}
+                            </Text>
+                            <Text style={styles.selectArrow}>â–¾</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    <Text style={[styles.label, { marginTop: 16 }]}>Invoice Date <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        style={styles.input}
+                        value={invoiceDate}
+                        onChangeText={text => {
+                            setInvoiceDate(text);
+                            if (selectedCustomer) setDueDate(addDays(text, Number(selectedCustomer.payment_terms || 30)));
+                        }}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor="#94A3B8"
+                    />
+
+                    <Text style={[styles.label, { marginTop: 16 }]}>Due Date <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        style={styles.input}
+                        value={dueDate}
+                        onChangeText={setDueDate}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor="#94A3B8"
+                    />
                 </View>
 
-                {/* ── Line Items ── */}
+                {/* â”€â”€ Line Items â”€â”€ */}
                 <View style={styles.card}>
-                    <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>Line Items</Text>
-                    </View>
+                    <Text style={styles.sectionTitle}>
+                        Line Items <Text style={styles.required}>*</Text>
+                    </Text>
 
-                    <View style={styles.itemHeaderRow}>
-                        <Text style={[styles.itemHeaderCell, { flex: 1 }]}>Description</Text>
-                        <Text style={[styles.itemHeaderCell, { width: 52, textAlign: 'center' }]}>Qty</Text>
-                        <Text style={[styles.itemHeaderCell, { width: 78, textAlign: 'right' }]}>Unit Price</Text>
-                        <Text style={[styles.itemHeaderCell, { width: 78, textAlign: 'right' }]}>Total</Text>
+                    {/* Column headers */}
+                    <View style={styles.lineHeaderRow}>
+                        <Text style={[styles.lineHeaderCell, { flex: 1 }]}>Description</Text>
+                        <Text style={[styles.lineHeaderCell, { width: 52, textAlign: 'center' }]}>Quantity</Text>
+                        <Text style={[styles.lineHeaderCell, { width: 80, textAlign: 'right' }]}>Unit Price</Text>
+                        <Text style={[styles.lineHeaderCell, { width: 80, textAlign: 'right' }]}>Line Total</Text>
+                        <View style={{ width: 32 }} />
                     </View>
 
                     {items.map((item, index) => {
                         const lineTotal = (parseFloat(item.quantity || '0') || 0) * (parseFloat(item.unit_price || '0') || 0);
                         return (
-                            <View key={index} style={[styles.lineItem, index < items.length - 1 && styles.lineItemBorder]}>
-                                <View style={styles.lineItemRow}>
-                                    <TextInput
-                                        style={[styles.input, { flex: 1 }]}
-                                        value={item.description}
-                                        onChangeText={v => updateItem(index, 'description', v)}
-                                        placeholder="Item description"
-                                        placeholderTextColor="#94A3B8"
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { width: 52, textAlign: 'center' }]}
-                                        value={item.quantity}
-                                        onChangeText={v => updateItem(index, 'quantity', v)}
-                                        placeholder="1"
-                                        placeholderTextColor="#94A3B8"
-                                        keyboardType="decimal-pad"
-                                    />
-                                    <TextInput
-                                        style={[styles.input, { width: 78, textAlign: 'right' }]}
-                                        value={item.unit_price}
-                                        onChangeText={v => updateItem(index, 'unit_price', v)}
-                                        placeholder="0.00"
-                                        placeholderTextColor="#94A3B8"
-                                        keyboardType="decimal-pad"
-                                    />
-                                    <View style={styles.lineTotalCell}>
-                                        <Text style={styles.lineTotalText}>{formatMoney(lineTotal)}</Text>
-                                    </View>
+                            <View key={index} style={[styles.lineItemRow, index < items.length - 1 && styles.lineItemBorder]}>
+                                <TextInput
+                                    style={[styles.lineInput, { flex: 1 }]}
+                                    value={item.description}
+                                    onChangeText={v => updateItem(index, 'description', v)}
+                                    placeholder="Item description"
+                                    placeholderTextColor="#94A3B8"
+                                />
+                                <TextInput
+                                    style={[styles.lineInput, { width: 52, textAlign: 'center' }]}
+                                    value={item.quantity}
+                                    onChangeText={v => updateItem(index, 'quantity', v)}
+                                    placeholder="1"
+                                    placeholderTextColor="#94A3B8"
+                                    keyboardType="decimal-pad"
+                                />
+                                <TextInput
+                                    style={[styles.lineInput, { width: 80, textAlign: 'right' }]}
+                                    value={item.unit_price}
+                                    onChangeText={v => updateItem(index, 'unit_price', v)}
+                                    placeholder="0.00"
+                                    placeholderTextColor="#94A3B8"
+                                    keyboardType="decimal-pad"
+                                />
+                                <View style={[styles.lineInput, { width: 80, alignItems: 'flex-end', justifyContent: 'center', backgroundColor: '#F5F5F5' }]}>
+                                    <Text style={styles.lineTotalText}>{formatMoney(lineTotal)}</Text>
                                 </View>
-                                {items.length > 1 && (
-                                    <TouchableOpacity style={styles.removeBtn} onPress={() => removeItemRow(index)}>
-                                        <Text style={styles.removeBtnText}>× Remove</Text>
-                                    </TouchableOpacity>
-                                )}
+                                <TouchableOpacity
+                                    style={styles.removeBtn}
+                                    onPress={() => removeItemRow(index)}
+                                    disabled={items.length === 1}
+                                >
+                                    <Text style={[styles.removeBtnText, items.length === 1 && { opacity: 0.3 }]}>Ã—</Text>
+                                </TouchableOpacity>
                             </View>
                         );
                     })}
 
                     <View style={styles.addBtnWrap}>
                         <TouchableOpacity style={styles.addBtn} onPress={addItemRow}>
-                            <Text style={styles.addBtnText}>＋ Add Line Item</Text>
+                            <Text style={styles.addBtnText}>+ Add Line Item</Text>
                         </TouchableOpacity>
                     </View>
+
+                    {/* Totals â€” right-aligned like the web */}
+                    <View style={styles.totalsDivider} />
+                    <View style={styles.totalsOuter}>
+                        <View style={styles.totalsInner}>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Subtotal:</Text>
+                                <Text style={styles.totalValueBold}>{formatMoney(subtotal)}</Text>
+                            </View>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabelLight}>Tax (0%):</Text>
+                                <Text style={styles.totalValueLight}>{formatMoney(0)}</Text>
+                            </View>
+                            <View style={styles.grandRow}>
+                                <Text style={styles.grandLabel}>Total:</Text>
+                                <Text style={styles.grandValue}>{formatMoney(total)}</Text>
+                            </View>
+                        </View>
+                    </View>
                 </View>
 
-                {/* ── Totals ── */}
-                <View style={styles.totalsCard}>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>Subtotal</Text>
-                        <Text style={styles.totalValue}>{formatMoney(subtotal)}</Text>
-                    </View>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>Tax (0%)</Text>
-                        <Text style={styles.totalValue}>{formatMoney(0)}</Text>
-                    </View>
-                    <View style={styles.grandRow}>
-                        <Text style={styles.grandLabel}>Total</Text>
-                        <Text style={styles.grandValue}>{formatMoney(total)}</Text>
-                    </View>
-                </View>
-
-                {/* ── Additional Information ── */}
+                {/* â”€â”€ Additional Information â”€â”€ */}
                 <View style={styles.card}>
-                    <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>Additional Information</Text>
-                    </View>
-                    <View style={styles.cardBody}>
-                        <Text style={styles.label}>Notes (internal)</Text>
-                        <TextInput
-                            style={[styles.input, styles.textarea]}
-                            value={notes}
-                            onChangeText={setNotes}
-                            placeholder="Internal notes (not shown to customer)"
-                            placeholderTextColor="#94A3B8"
-                            multiline
-                            numberOfLines={3}
-                        />
-                        <Text style={styles.label}>Terms &amp; Conditions</Text>
-                        <TextInput
-                            style={[styles.input, styles.textarea]}
-                            value={terms}
-                            onChangeText={setTerms}
-                            placeholder="Terms and conditions shown on invoice"
-                            placeholderTextColor="#94A3B8"
-                            multiline
-                            numberOfLines={3}
-                        />
-                    </View>
+                    <Text style={styles.sectionTitle}>Additional Information</Text>
+
+                    <Text style={styles.label}>Notes (internal)</Text>
+                    <TextInput
+                        style={[styles.input, styles.textarea]}
+                        value={notes}
+                        onChangeText={setNotes}
+                        placeholder="Internal notes (not shown to customer)"
+                        placeholderTextColor="#94A3B8"
+                        multiline
+                        numberOfLines={3}
+                    />
+
+                    <Text style={[styles.label, { marginTop: 16 }]}>Terms &amp; Conditions</Text>
+                    <TextInput
+                        style={[styles.input, styles.textarea]}
+                        value={terms}
+                        onChangeText={setTerms}
+                        placeholder="Terms and conditions shown on invoice"
+                        placeholderTextColor="#94A3B8"
+                        multiline
+                        numberOfLines={3}
+                    />
                 </View>
 
             </ScrollView>
 
+            {/* Sticky footer */}
             <View style={styles.footer}>
                 <TouchableOpacity style={[styles.createBtn, saving && styles.createBtnDisabled]} onPress={handleSave} disabled={saving}>
                     {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.createBtnText}>Create Invoice</Text>}
                 </TouchableOpacity>
             </View>
+
+            {/* Customer picker modal */}
+            <Modal visible={showCustomerPicker} transparent animationType="fade" onRequestClose={() => setShowCustomerPicker(false)}>
+                <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCustomerPicker(false)}>
+                    <View style={styles.modalBox} onStartShouldSetResponder={() => true}>
+                        <Text style={styles.modalTitle}>Select Customer</Text>
+                        <FlatList
+                            data={customers}
+                            keyExtractor={c => String(c.customer_id)}
+                            style={{ maxHeight: 320 }}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={[styles.modalItem, selectedCustomerId === item.customer_id && styles.modalItemActive]}
+                                    onPress={() => selectCustomer(item)}
+                                >
+                                    <Text style={[styles.modalItemText, selectedCustomerId === item.customer_id && styles.modalItemTextActive]}>
+                                        {item.customer_name}
+                                    </Text>
+                                    {selectedCustomerId === item.customer_id && <Text style={styles.checkMark}>âœ“</Text>}
+                                </TouchableOpacity>
+                            )}
+                            ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: '#F1F5F9' }} />}
+                        />
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+
         </KeyboardAvoidingView>
     );
 }
@@ -323,121 +338,139 @@ const styles = StyleSheet.create({
     // Card
     card: {
         backgroundColor: '#fff',
-        borderRadius: 16,
-        marginBottom: 14,
-        overflow: 'hidden',
-        elevation: 2,
-        shadowColor: '#0F172A',
+        borderRadius: 8,
+        marginBottom: 16,
+        padding: 20,
+        elevation: 1,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 4,
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
     },
-    cardHeader: {
-        backgroundColor: '#1E3A8A',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+
+    // Section title matches web <h3>
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1a1a1a',
+        marginBottom: 20,
     },
-    cardTitle: { fontSize: 14, fontWeight: '800', color: '#fff', letterSpacing: 0.4, textTransform: 'uppercase' },
-    cardBody: { padding: 16 },
 
     label: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#64748B',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#333',
         marginBottom: 6,
-        marginTop: 12,
     },
+    required: { color: '#e53e3e' },
+
     input: {
         borderWidth: 1,
-        borderColor: '#E2E8F0',
-        borderRadius: 10,
-        paddingHorizontal: 10,
+        borderColor: '#ced4da',
+        borderRadius: 4,
+        paddingHorizontal: 12,
         paddingVertical: 10,
-        color: '#0F172A',
+        color: '#333',
         fontSize: 14,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#fff',
     },
     textarea: { minHeight: 80, textAlignVertical: 'top' },
 
-    dateRow: { flexDirection: 'row', gap: 10 },
-    col: { flex: 1 },
-
-    // Customer chips
-    chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    chip: {
-        borderWidth: 1.5,
-        borderColor: '#CBD5E1',
-        borderRadius: 999,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+    // Customer dropdown
+    select: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ced4da',
+        borderRadius: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 11,
         backgroundColor: '#fff',
     },
-    chipActive: { borderColor: '#1E3A8A', backgroundColor: '#EFF6FF' },
-    chipText: { color: '#475569', fontWeight: '600', fontSize: 13 },
-    chipTextActive: { color: '#1E3A8A', fontWeight: '700' },
+    selectText: { color: '#333', fontSize: 14, flex: 1 },
+    selectPlaceholder: { color: '#94A3B8', fontSize: 14, flex: 1 },
+    selectArrow: { color: '#666', fontSize: 14, marginLeft: 8 },
 
-    // Line items header
-    itemHeaderRow: {
+    // Line items column header
+    lineHeaderRow: {
         flexDirection: 'row',
         gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        backgroundColor: '#F8FAFC',
-        borderTopWidth: 1,
-        borderTopColor: '#E2E8F0',
+        paddingBottom: 8,
         borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
-    },
-    itemHeaderCell: { fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5 },
-
-    // Line item row
-    lineItem: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6 },
-    lineItemBorder: { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-    lineItemRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-    lineTotalCell: { width: 78, alignItems: 'flex-end', paddingRight: 2 },
-    lineTotalText: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
-
-    removeBtn: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 2, paddingVertical: 2 },
-    removeBtnText: { color: '#DC2626', fontWeight: '700', fontSize: 12 },
-
-    addBtnWrap: { padding: 12 },
-    addBtn: {
-        paddingVertical: 12,
-        backgroundColor: '#EFF6FF',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#BFDBFE',
+        borderBottomColor: '#dee2e6',
+        marginBottom: 4,
         alignItems: 'center',
     },
-    addBtnText: { color: '#1E40AF', fontWeight: '800', fontSize: 13 },
+    lineHeaderCell: { fontSize: 12, fontWeight: '600', color: '#555' },
 
-    // Totals
-    totalsCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 14,
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 4,
+    // Line item row
+    lineItemRow: {
+        flexDirection: 'row',
+        gap: 6,
+        paddingVertical: 8,
+        alignItems: 'center',
     },
-    totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
-    totalLabel: { fontSize: 14, color: '#64748B', fontWeight: '500' },
-    totalValue: { fontSize: 14, color: '#334155', fontWeight: '600' },
+    lineItemBorder: { borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+    lineInput: {
+        borderWidth: 1,
+        borderColor: '#ced4da',
+        borderRadius: 4,
+        paddingHorizontal: 7,
+        paddingVertical: 8,
+        color: '#333',
+        fontSize: 13,
+        backgroundColor: '#fff',
+    },
+    lineTotalText: { fontSize: 13, fontWeight: '600', color: '#333' },
+
+    removeBtn: {
+        width: 32,
+        height: 34,
+        borderRadius: 4,
+        backgroundColor: '#dc3545',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    removeBtnText: { color: '#fff', fontWeight: '700', fontSize: 18, lineHeight: 20 },
+
+    addBtnWrap: { marginTop: 12, marginBottom: 4 },
+    addBtn: {
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        backgroundColor: '#6c757d',
+        borderRadius: 4,
+        alignSelf: 'flex-start',
+    },
+    addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+
+    // Totals â€” right-aligned panel like the web
+    totalsDivider: {
+        marginTop: 20,
+        borderTopWidth: 2,
+        borderTopColor: '#ddd',
+    },
+    totalsOuter: {
+        alignItems: 'flex-end',
+        marginTop: 16,
+    },
+    totalsInner: {
+        minWidth: 240,
+    },
+    totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    totalLabel: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
+    totalValueBold: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
+    totalLabelLight: { fontSize: 15, color: '#555' },
+    totalValueLight: { fontSize: 15, color: '#555' },
     grandRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingTop: 12,
-        marginTop: 8,
+        paddingTop: 10,
         borderTopWidth: 2,
-        borderTopColor: '#1E3A8A',
+        borderTopColor: '#333',
     },
-    grandLabel: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
-    grandValue: { fontSize: 18, fontWeight: '800', color: '#1E3A8A' },
+    grandLabel: { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
+    grandValue: { fontSize: 18, fontWeight: '700', color: '#1E3A8A' },
 
     // Footer
     footer: {
@@ -447,22 +480,56 @@ const styles = StyleSheet.create({
         bottom: 0,
         backgroundColor: '#fff',
         borderTopWidth: 1,
-        borderTopColor: '#E2E8F0',
+        borderTopColor: '#dee2e6',
         paddingHorizontal: 16,
         paddingVertical: 12,
         paddingBottom: Platform.OS === 'ios' ? 28 : 12,
     },
     createBtn: {
-        backgroundColor: '#1E3A8A',
-        borderRadius: 12,
+        backgroundColor: '#28a745',
+        borderRadius: 4,
         paddingVertical: 14,
         alignItems: 'center',
-        shadowColor: '#1E3A8A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
     },
     createBtnDisabled: { opacity: 0.6 },
-    createBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+    createBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+    // Customer picker modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+    },
+    modalBox: {
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        overflow: 'hidden',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+    },
+    modalTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#1a1a1a',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: '#dee2e6',
+    },
+    modalItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+    modalItemActive: { backgroundColor: '#EFF6FF' },
+    modalItemText: { fontSize: 15, color: '#333' },
+    modalItemTextActive: { color: '#1E3A8A', fontWeight: '700' },
+    checkMark: { color: '#1E3A8A', fontWeight: '700', fontSize: 15 },
 });
+
