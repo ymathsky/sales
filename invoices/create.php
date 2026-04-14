@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $invoiceId = Invoice::create($data, $items);
         
         if ($invoiceId) {
-            header('Location: <?= WEB_ROOT ?>/invoices/view.php?id=' . $invoiceId . '&company=' . $companyId . '&created=1');
+            header('Location: ' . WEB_ROOT . '/invoices/view.php?id=' . $invoiceId . '&company=' . $companyId . '&created=1');
             exit;
         } else {
             $errors[] = 'Failed to create invoice. Please try again.';
