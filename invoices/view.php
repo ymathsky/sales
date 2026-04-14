@@ -304,6 +304,15 @@ include __DIR__ . '/../views/header.php';
                 Cancel Invoice
             </button>
         </form>
+        <a href="<?= WEB_ROOT ?>/invoices/move.php?id=<?= $invoiceId ?>&company=<?= $companyId ?>"
+           class="btn btn-secondary"
+           style="background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;"
+           title="Move invoice to a different company">
+            <svg style="width:14px;height:14px;vertical-align:middle;margin-right:5px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4"/>
+            </svg>
+            Move to Company
+        </a>
     <?php endif; ?>
 </div>
 

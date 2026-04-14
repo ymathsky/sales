@@ -397,4 +397,46 @@ class Invoice {
             'overdue_total' => (float)($row['overdue_total'] ?? 0),
         ];
     }
+
+    /**
+     * Move an invoice (and its items) to a different company.
+     * Generates a new invoice number in the target company to avoid conflicts.
+     *
+     * @param int $invoiceId      Invoice to move
+     * @param int $fromCompanyId  Source company (security check)
+     * @param int $toCompanyId    Destination company
+     * @return bool
+     */
+    public static function moveToCompany($invoiceId, $fromCompanyId, $toCompanyId) {
+        try {
+            $pdo = getDBConnection();
+            $pdo->beginTransaction();
+
+            // Verify the invoice belongs to the source company
+            $stmt = $pdo->prepare("SELECT invoice_id FROM invoices WHERE invoice_id = ? AND company_id = ?");
+            $stmt->execute([$invoiceId, $fromCompanyId]);
+            if (!$stmt->fetch()) {
+                $pdo->rollBack();
+                return false;
+            }
+
+            // Generate a fresh invoice number for the target company
+            $newNumber = self::generateInvoiceNumber($toCompanyId);
+
+            // Move the invoice
+            $stmt = $pdo->prepare(
+                "UPDATE invoices SET company_id = ?, invoice_number = ? WHERE invoice_id = ?"
+            );
+            $stmt->execute([$toCompanyId, $newNumber, $invoiceId]);
+
+            $pdo->commit();
+            return $newNumber;
+        } catch (Exception $e) {
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('Error moving invoice: ' . $e->getMessage());
+            return false;
+        }
+    }
 }
