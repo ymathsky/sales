@@ -32,7 +32,7 @@ $hasInvoices = $result['count'] > 0;
 
 if ($hasInvoices) {
     setFlashMessage('Cannot delete client with existing invoices. Please delete or reassign invoices first.', 'error');
-    redirect("<?= WEB_ROOT ?>/customers/list.php?company={$companyId}");
+    redirect(WEB_ROOT . "/customers/list.php?company={$companyId}");
 }
 
 // Delete customer
@@ -42,4 +42,4 @@ if (Customer::delete($customerId, $companyId)) {
     setFlashMessage('Failed to delete client', 'error');
 }
 
-redirect("<?= WEB_ROOT ?>/customers/list.php?company={$companyId}");
+redirect(WEB_ROOT . "/customers/list.php?company={$companyId}");

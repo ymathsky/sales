@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $showForm) {
         try {
             $transactionId = Transaction::create($formData);
             setFlashMessage('✓ Transaction created successfully! Amount: ₱' . number_format($formData['amount'], 2), 'success');
-            redirect("<?= WEB_ROOT ?>/transactions/list.php?company={$companyId}");
+            redirect(WEB_ROOT . "/transactions/list.php?company={$companyId}");
         } catch (Exception $e) {
             $errors[] = 'Failed to create transaction: ' . $e->getMessage();
         }

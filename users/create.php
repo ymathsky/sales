@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->commit();
             $success = true;
             $_SESSION['flash_message'] = 'User created successfully';
-            header('Location: <?= WEB_ROOT ?>/users/list.php');
+            header('Location: ' . WEB_ROOT . '/users/list.php');
             exit;
         } catch (PDOException $e) {
             $pdo->rollBack();

@@ -16,7 +16,7 @@ $companyId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $company = Company::getById($companyId);
 if (!$company) {
     $_SESSION['flash_message'] = 'Company not found';
-    header('Location: <?= WEB_ROOT ?>/companies/list.php');
+    header('Location: ' . WEB_ROOT . '/companies/list.php');
     exit;
 }
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             
             $_SESSION['flash_message'] = 'Company updated successfully';
-            header('Location: <?= WEB_ROOT ?>/companies/list.php');
+            header('Location: ' . WEB_ROOT . '/companies/list.php');
             exit;
         } catch (PDOException $e) {
             $errors[] = 'Database error: ' . $e->getMessage();

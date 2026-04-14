@@ -34,14 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete'])) {
         Transaction::delete($transactionId, $companyId);
         setFlashMessage('✓ Transaction #' . $transactionId . ' deleted successfully!', 'success');
-        redirect("<?= WEB_ROOT ?>/transactions/list.php?company={$companyId}");
+        redirect(WEB_ROOT . "/transactions/list.php?company={$companyId}");
     } elseif (isset($_POST['delete_receipt_id'])) {
         if (Transaction::deleteReceipt($_POST['delete_receipt_id'], $transactionId)) {
             setFlashMessage('Receipt deleted successfully', 'success');
         } else {
             setFlashMessage('Failed to delete receipt', 'error');
         }
-        redirect("<?= WEB_ROOT ?>/transactions/edit.php?id={$transactionId}&company={$companyId}");
+        redirect(WEB_ROOT . "/transactions/edit.php?id={$transactionId}&company={$companyId}");
     } else {
         // Handle multiple receipt uploads
         if (!empty($_FILES['receipts']['name'][0])) {
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 Transaction::update($transactionId, $companyId, $formData);
                 setFlashMessage('✓ Transaction updated successfully!', 'success');
-                redirect("<?= WEB_ROOT ?>/transactions/list.php?company={$companyId}");
+                redirect(WEB_ROOT . "/transactions/list.php?company={$companyId}");
             } catch (Exception $e) {
                 $errors[] = 'Failed to update transaction: ' . $e->getMessage();
             }

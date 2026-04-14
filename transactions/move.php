@@ -18,7 +18,7 @@ requireCompanyAccess($currentCompanyId);
 $transactionId = $_GET['id'] ?? $_POST['id'] ?? null;
 if (!$transactionId) {
     setFlashMessage('Transaction ID is required.', 'error');
-    header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
+    header('Location: ' . WEB_ROOT . '/transactions/list.php?company=' . $currentCompanyId);
     exit;
 }
 
@@ -26,7 +26,7 @@ if (!$transactionId) {
 $transaction = Transaction::getById($transactionId, $currentCompanyId);
 if (!$transaction) {
     setFlashMessage('Transaction not found or access denied.', 'error');
-    header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
+    header('Location: ' . WEB_ROOT . '/transactions/list.php?company=' . $currentCompanyId);
     exit;
 }
 
@@ -38,7 +38,7 @@ $targetCompanies = array_filter($allCompanies, function($company) use ($currentC
 
 if (empty($targetCompanies)) {
     setFlashMessage('You do not have access to any other companies.', 'error');
-    header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
+    header('Location: ' . WEB_ROOT . '/transactions/list.php?company=' . $currentCompanyId);
     exit;
 }
 
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (Transaction::moveToCompany($transactionId, $currentCompanyId, $targetCompanyId)) {
                 $targetCompany = Company::getById($targetCompanyId);
                 setFlashMessage('Transaction successfully moved to ' . htmlspecialchars($targetCompany['name']), 'success');
-                header('Location: <?= WEB_ROOT ?>/transactions/list.php?company=' . $currentCompanyId);
+                header('Location: ' . WEB_ROOT . '/transactions/list.php?company=' . $currentCompanyId);
                 exit;
             } else {
                 setFlashMessage('Failed to move transaction. Please try again.', 'error');

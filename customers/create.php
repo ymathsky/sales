@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $customerId = Customer::create($formData);
             setFlashMessage('Customer created successfully', 'success');
-            header('Location: <?= WEB_ROOT ?>/customers/list.php?company=' . $companyId);
+            header('Location: ' . WEB_ROOT . '/customers/list.php?company=' . $companyId);
             exit;
         } catch (Exception $e) {
             $errors[] = 'Error creating customer: ' . $e->getMessage();

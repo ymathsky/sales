@@ -13,7 +13,7 @@ $companyId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if (!$companyId) {
     $_SESSION['flash_message'] = 'Invalid company ID';
-    header('Location: <?= WEB_ROOT ?>/companies/list.php');
+    header('Location: ' . WEB_ROOT . '/companies/list.php');
     exit;
 }
 
@@ -31,7 +31,7 @@ try {
     
     if ($transactionCount > 0 || $userCount > 0) {
         $_SESSION['flash_message'] = 'Cannot delete company with existing transactions or assigned users';
-        header('Location: <?= WEB_ROOT ?>/companies/edit.php?id=' . $companyId);
+        header('Location: ' . WEB_ROOT . '/companies/edit.php?id=' . $companyId);
         exit;
     }
     
@@ -40,11 +40,11 @@ try {
     $stmt->execute([$companyId]);
     
     $_SESSION['flash_message'] = 'Company deleted successfully';
-    header('Location: <?= WEB_ROOT ?>/companies/list.php');
+    header('Location: ' . WEB_ROOT . '/companies/list.php');
     exit;
     
 } catch (PDOException $e) {
     $_SESSION['flash_message'] = 'Error deleting company: ' . $e->getMessage();
-    header('Location: <?= WEB_ROOT ?>/companies/list.php');
+    header('Location: ' . WEB_ROOT . '/companies/list.php');
     exit;
 }

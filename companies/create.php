@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = true;
             // Using setFlashMessage would require updating list.php to use getFlashMessage
             $_SESSION['flash_message'] = 'Company created successfully';
-            header('Location: <?= WEB_ROOT ?>/companies/list.php');
+            header('Location: ' . WEB_ROOT . '/companies/list.php');
             exit;
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {

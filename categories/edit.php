@@ -19,7 +19,7 @@ $category = Category::getById($categoryId);
 
 if (!$category) {
     setFlashMessage('Category not found', 'error');
-    header('Location: <?= WEB_ROOT ?>/categories/list.php');
+    header('Location: ' . WEB_ROOT . '/categories/list.php');
     exit;
 }
 
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             Category::update($categoryId, $formData);
             setFlashMessage('Category updated successfully', 'success');
-            header('Location: <?= WEB_ROOT ?>/categories/list.php');
+            header('Location: ' . WEB_ROOT . '/categories/list.php');
             exit;
         } catch (Exception $e) {
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
