@@ -236,3 +236,11 @@ export async function switchCompany(companyId) {
     });
     return parseApiResponse(res);
 }
+
+export async function moveTransaction(transactionId, targetCompanyId) {
+    const res = await apiRequest('/move-transaction.php', {
+        method: 'POST',
+        body: JSON.stringify({ transaction_id: transactionId, target_company_id: targetCompanyId }),
+    });
+    return parseApiResponse(res);
+}

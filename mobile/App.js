@@ -18,6 +18,7 @@ import InvoiceFormScreen from './src/screens/InvoiceFormScreen';
 import InvoicesScreen from './src/screens/InvoicesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LockScreen from './src/screens/LockScreen';
+import MoveTransactionScreen from './src/screens/MoveTransactionScreen';
 import { initializeFinancialAlerts } from './src/services/financialAlerts';
 
 const Stack = createNativeStackNavigator();
@@ -30,11 +31,22 @@ function MainTabs() {
         <Tab.Navigator
             screenOptions={{
                 tabBarActiveTintColor: '#2563EB',
-                tabBarInactiveTintColor: '#6B7280',
-                tabBarStyle: { backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E5E7EB' },
-                headerStyle: { backgroundColor: '#2563EB' },
+                tabBarInactiveTintColor: '#94A3B8',
+                tabBarStyle: {
+                    backgroundColor: '#fff',
+                    borderTopWidth: 0,
+                    elevation: 16,
+                    shadowColor: '#0F172A',
+                    shadowOffset: { width: 0, height: -4 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 12,
+                    height: 62,
+                    paddingBottom: 8,
+                },
+                tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+                headerStyle: { backgroundColor: '#1E3A8A' },
                 headerTintColor: '#fff',
-                headerTitleStyle: { fontWeight: 'bold' },
+                headerTitleStyle: { fontWeight: '700' },
             }}
         >
             <Tab.Screen
@@ -189,6 +201,17 @@ function AppNavigator() {
                                 }}
                             />
                         )}
+                        <Stack.Screen
+                            name="MoveTransaction"
+                            component={MoveTransactionScreen}
+                            options={{
+                                headerShown: true,
+                                title: 'Transfer Transaction',
+                                headerStyle: { backgroundColor: '#1E3A8A' },
+                                headerTintColor: '#fff',
+                                headerTitleStyle: { fontWeight: '700' },
+                            }}
+                        />
                     </>
                 )}
             </Stack.Navigator>

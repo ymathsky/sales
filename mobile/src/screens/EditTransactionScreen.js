@@ -8,6 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { updateTransaction, deleteTransaction, getCategories, getReceipts, uploadReceipts, deleteReceipt } from '../api/client';
+import SignatureCaptureModal from '../components/SignatureCaptureModal';
+import { createSignatureAsset, isSignatureAsset, upsertSignatureAsset } from '../utils/signatureAsset';
 
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'credit_card', 'gcash', 'maya', 'other'];
 const RECEIPT_LIMIT = 20;
@@ -68,6 +70,8 @@ export default function EditTransactionScreen() {
     const [deletingReceiptId, setDeletingReceiptId] = useState(null);
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewUri, setPreviewUri] = useState('');
+    const [signatureVisible, setSignatureVisible] = useState(false);
+    const [savingSignature, setSavingSignature] = useState(false);
 
     useEffect(() => {
         const loadCategories = async () => {
@@ -165,6 +169,19 @@ export default function EditTransactionScreen() {
 
     function removeReceipt(indexToRemove) {
         setSelectedReceipts(prev => prev.filter((_, index) => index !== indexToRemove));
+    }
+
+    async function handleSignatureSave(dataUrl) {
+        setSavingSignature(true);
+        try {
+            const signatureAsset = await createSignatureAsset(dataUrl);
+            setSelectedReceipts(prev => upsertSignatureAsset(prev, signatureAsset, RECEIPT_LIMIT));
+            setSignatureVisible(false);
+        } catch {
+            Alert.alert('Signature Error', 'Unable to save signature image. Please try again.');
+        } finally {
+            setSavingSignature(false);
+        }
     }
 
     function openPreview(uri) {
@@ -384,6 +401,9 @@ export default function EditTransactionScreen() {
                     <TouchableOpacity style={[styles.receiptCameraBtn, styles.receiptActionBtn]} onPress={captureReceiptPhoto}>
                         <Text style={styles.receiptCameraText}>+ Camera</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity style={[styles.signatureBtn, styles.receiptActionBtn]} onPress={() => setSignatureVisible(true)}>
+                        <Text style={styles.signatureBtnText}>+ Signature</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {selectedReceipts.length > 0 && (
@@ -391,6 +411,11 @@ export default function EditTransactionScreen() {
                         {selectedReceipts.map((asset, index) => (
                             <View key={`${asset.uri}-${index}`} style={styles.receiptThumbWrap}>
                                 <Image source={{ uri: asset.uri }} style={styles.receiptThumb} />
+                                {isSignatureAsset(asset) && (
+                                    <View style={styles.signatureBadge}>
+                                        <Text style={styles.signatureBadgeText}>Sign</Text>
+                                    </View>
+                                )}
                                 <TouchableOpacity style={styles.receiptRemoveBtn} onPress={() => removeReceipt(index)}>
                                     <Text style={styles.receiptRemoveText}>x</Text>
                                 </TouchableOpacity>
@@ -422,6 +447,15 @@ export default function EditTransactionScreen() {
                         : <Text style={styles.deleteBtnText}>🗑 Delete Transaction</Text>
                     }
                 </TouchableOpacity>
+
+                {/* Transfer to another company */}
+                <TouchableOpacity
+                    style={[styles.moveBtn, (saving || deleting) && styles.disabled]}
+                    onPress={() => navigation.navigate('MoveTransaction', { transaction })}
+                    disabled={saving || deleting}
+                >
+                    <Text style={styles.moveBtnText}>📤 Transfer to Another Company</Text>
+                </TouchableOpacity>
             </View>
 
             <Modal
@@ -439,6 +473,13 @@ export default function EditTransactionScreen() {
                     ) : null}
                 </View>
             </Modal>
+
+            <SignatureCaptureModal
+                visible={signatureVisible}
+                saving={savingSignature}
+                onCancel={() => setSignatureVisible(false)}
+                onSave={handleSignatureSave}
+            />
         </ScrollView>
     );
 }
@@ -480,8 +521,8 @@ const styles = StyleSheet.create({
     chipText: { color: '#374151', fontWeight: '600', fontSize: 13, textTransform: 'capitalize' },
     chipTextActive: { color: '#fff' },
     receiptInfoText: { marginTop: -4, marginBottom: 8, color: '#6B7280', fontSize: 12 },
-    receiptActionRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
-    receiptActionBtn: { flex: 1, marginBottom: 0 },
+    receiptActionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 10 },
+    receiptActionBtn: { flexGrow: 1, flexBasis: '30%', marginBottom: 0 },
     receiptPickerBtn: {
         backgroundColor: '#EFF6FF',
         borderWidth: 1,
@@ -500,6 +541,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
     },
     receiptCameraText: { color: '#047857', fontWeight: '700', textAlign: 'center' },
+    signatureBtn: {
+        backgroundColor: '#FEF3C7',
+        borderWidth: 1,
+        borderColor: '#FCD34D',
+        borderRadius: 10,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+    },
+    signatureBtnText: { color: '#92400E', fontWeight: '700', textAlign: 'center' },
     receiptPreviewRow: { marginBottom: 16 },
     existingReceiptThumbWrap: { marginRight: 10, position: 'relative' },
     existingReceiptDeleteBtn: {
@@ -516,6 +566,16 @@ const styles = StyleSheet.create({
     existingReceiptDeleteText: { color: '#fff', fontSize: 11, fontWeight: '700' },
     receiptThumbWrap: { marginRight: 10, position: 'relative' },
     receiptThumb: { width: 78, height: 78, borderRadius: 10, backgroundColor: '#E5E7EB' },
+    signatureBadge: {
+        position: 'absolute',
+        left: 6,
+        bottom: 6,
+        backgroundColor: 'rgba(17, 24, 39, 0.8)',
+        borderRadius: 8,
+        paddingHorizontal: 6,
+        paddingVertical: 3,
+    },
+    signatureBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
     receiptRemoveBtn: {
         position: 'absolute',
         top: -6,
@@ -542,6 +602,17 @@ const styles = StyleSheet.create({
         borderColor: '#FCA5A5',
     },
     deleteBtnText: { color: '#EF4444', fontWeight: '700', fontSize: 15 },
+    moveBtn: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginTop: 10,
+        marginBottom: 40,
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+    },
+    moveBtnText: { color: '#2563EB', fontWeight: '700', fontSize: 15 },
     disabled: { opacity: 0.6 },
     previewOverlay: {
         flex: 1,
