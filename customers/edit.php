@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete'])) {
         Customer::delete($customerId, $companyId);
         setFlashMessage('Customer deleted successfully', 'success');
-        header('Location: <?= WEB_ROOT ?>/customers/list.php?company=' . $companyId);
+        header('Location: ' . WEB_ROOT . '/customers/list.php?company=' . $companyId);
         exit;
     }
     
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             Customer::update($customerId, $companyId, $formData);
             setFlashMessage('Customer updated successfully', 'success');
-            header('Location: <?= WEB_ROOT ?>/customers/list.php?company=' . $companyId);
+            header('Location: ' . WEB_ROOT . '/customers/list.php?company=' . $companyId);
             exit;
         } catch (Exception $e) {
             $errors[] = 'Error updating customer: ' . $e->getMessage();
