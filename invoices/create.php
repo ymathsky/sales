@@ -128,60 +128,61 @@ include __DIR__ . '/../views/header.php';
     <div class="form-card">
         <h3 style="margin-bottom: 20px;">Invoice Details</h3>
         
-        <div class="form-row">
-            <div class="form-group" style="flex: 2;">
-                <label for="customer_id">Customer <span style="color: red;">*</span></label>
-                <select name="customer_id" id="customer_id" class="form-control" required onchange="updatePaymentTerms()">
-                    <option value="">Select Customer</option>
-                    <?php foreach ($customers as $cust): ?>
-                        <option value="<?= $cust['customer_id'] ?>" 
-                                data-payment-terms="<?= $cust['payment_terms'] ?>"
-                                <?= $selectedCustomerId == $cust['customer_id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($cust['customer_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="invoice_date">Invoice Date <span style="color: red;">*</span></label>
-                <input type="date" name="invoice_date" id="invoice_date" class="form-control" 
-                       value="<?= date('Y-m-d') ?>" required onchange="updateDueDate()">
-            </div>
-            
-            <div class="form-group">
-                <label for="due_date">Due Date <span style="color: red;">*</span></label>
-                <input type="date" name="due_date" id="due_date" class="form-control" 
-                       value="<?= date('Y-m-d', strtotime('+30 days')) ?>" required>
-            </div>
+        <div class="form-group">
+            <label for="customer_id">Customer <span style="color: red;">*</span></label>
+            <select name="customer_id" id="customer_id" class="form-control" required onchange="updatePaymentTerms()">
+                <option value="">Select Customer</option>
+                <?php foreach ($customers as $cust): ?>
+                    <option value="<?= $cust['customer_id'] ?>" 
+                            data-payment-terms="<?= $cust['payment_terms'] ?>"
+                            <?= $selectedCustomerId == $cust['customer_id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($cust['customer_name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="invoice_date">Invoice Date <span style="color: red;">*</span></label>
+            <input type="date" name="invoice_date" id="invoice_date" class="form-control" 
+                   value="<?= date('Y-m-d') ?>" required onchange="updateDueDate()">
+        </div>
+        
+        <div class="form-group">
+            <label for="due_date">Due Date <span style="color: red;">*</span></label>
+            <input type="date" name="due_date" id="due_date" class="form-control" 
+                   value="<?= date('Y-m-d', strtotime('+30 days')) ?>" required>
         </div>
     </div>
     
     <div class="form-card">
         <h3 style="margin-bottom: 20px;">Line Items <span style="color: red;">*</span></h3>
-        
+
+        <div style="display: grid; grid-template-columns: 2fr 100px 150px 150px 60px; gap: 15px; margin-bottom: 8px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #dee2e6;">
+            <div style="font-weight: 600; color: #555; font-size: 13px;">Description</div>
+            <div style="font-weight: 600; color: #555; font-size: 13px;">Quantity</div>
+            <div style="font-weight: 600; color: #555; font-size: 13px;">Unit Price</div>
+            <div style="font-weight: 600; color: #555; font-size: 13px;">Line Total</div>
+            <div></div>
+        </div>
+
         <div id="lineItemsContainer">
-            <div class="line-item" style="display: grid; grid-template-columns: 2fr 100px 150px 150px 60px; gap: 15px; margin-bottom: 15px; align-items: end;">
+            <div class="line-item" style="display: grid; grid-template-columns: 2fr 100px 150px 150px 60px; gap: 15px; margin-bottom: 10px; align-items: center;">
                 <div>
-                    <label>Description</label>
                     <input type="text" name="item_description[]" class="form-control" placeholder="Item description">
                 </div>
                 <div>
-                    <label>Quantity</label>
                     <input type="number" name="item_quantity[]" class="form-control item-qty" 
                            min="0" step="0.01" value="1" onchange="calculateLineTotals()">
                 </div>
                 <div>
-                    <label>Unit Price</label>
                     <input type="number" name="item_unit_price[]" class="form-control item-price" 
                            min="0" step="0.01" placeholder="0.00" onchange="calculateLineTotals()">
                 </div>
                 <div>
-                    <label>Line Total</label>
                     <input type="text" class="form-control line-total" readonly value="₱0.00" style="background: #f5f5f5;">
                 </div>
                 <div>
-                    <label>&nbsp;</label>
                     <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)" style="width: 100%;">×</button>
                 </div>
             </div>
@@ -251,6 +252,7 @@ function addLineItem() {
     });
     
     container.appendChild(newItem);
+    calculateLineTotals();
 }
 
 function removeLineItem(button) {
