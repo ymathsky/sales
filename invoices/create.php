@@ -93,220 +93,536 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include __DIR__ . '/../views/header.php';
 ?>
 
-<div class="page-header">
-    <h1>
-        <svg style="width: 28px; height: 28px; vertical-align: middle; margin-right: 10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        Create Invoice - <?= htmlspecialchars($company['name']) ?>
-    </h1>
-    <div>
-        <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">← Back to Invoices</a>
-    </div>
-</div>
+<style>
+/* ── Page-scoped modern invoice styles ── */
+.inv-page { max-width: 1200px; margin: 0 auto; padding: 0 4px 60px; }
 
-<?php if (!empty($errors)): ?>
-    <div class="alert alert-danger">
-        <strong>Please fix the following errors:</strong>
-        <ul style="margin: 10px 0 0 20px;">
-            <?php foreach ($errors as $error): ?>
-                <li><?= htmlspecialchars($error) ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
+/* Page header */
+.inv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+.inv-header-left { display: flex; align-items: center; gap: 14px; }
+.inv-header-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(37,99,235,.3);
+}
+.inv-header-icon svg { width: 24px; height: 24px; color: #fff; stroke: #fff; }
+.inv-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+.inv-header .inv-subtitle { font-size: .85rem; color: var(--text-light); margin-top: 2px; }
 
-<?php if (empty($customers)): ?>
-    <div class="alert alert-warning">
-        <strong>No customers found.</strong><br>
-        You need to create at least one customer before creating an invoice.
-        <a href="<?= WEB_ROOT ?>/customers/create.php?company=<?= $companyId ?>" class="btn btn-sm btn-primary" style="margin-left: 10px;">+ Create Customer</a>
-    </div>
-<?php else: ?>
+/* Two-column layout */
+.inv-layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .inv-layout { grid-template-columns: 1fr; } }
 
-<form method="POST" action="" id="invoiceForm">
-    <div class="form-card">
-        <h3 style="margin-bottom: 20px;">Invoice Details</h3>
-        
-        <div class="form-group">
-            <label for="customer_id">Customer <span style="color: red;">*</span></label>
-            <select name="customer_id" id="customer_id" class="form-control" required onchange="updatePaymentTerms()">
-                <option value="">Select Customer</option>
-                <?php foreach ($customers as $cust): ?>
-                    <option value="<?= $cust['customer_id'] ?>" 
-                            data-payment-terms="<?= $cust['payment_terms'] ?>"
-                            <?= $selectedCustomerId == $cust['customer_id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($cust['customer_name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+/* Section cards */
+.inv-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: box-shadow .2s;
+}
+.inv-card:hover { box-shadow: var(--shadow-md); }
+.inv-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+.inv-card-header-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.icon-blue  { background: #eff6ff; color: #2563eb; }
+.icon-green { background: #f0fdf4; color: #16a34a; }
+.icon-amber { background: #fffbeb; color: #d97706; }
+.inv-card-header h3 { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+.inv-card-header .badge-req {
+    margin-left: auto;
+    font-size: .7rem; font-weight: 700;
+    background: #fef2f2; color: #dc2626;
+    border-radius: 99px; padding: 2px 8px; letter-spacing: .3px;
+}
+.inv-card-body { padding: 20px 22px; }
+
+/* Modern form fields */
+.inv-field { margin-bottom: 18px; }
+.inv-field:last-child { margin-bottom: 0; }
+.inv-label {
+    display: block; font-size: .8rem; font-weight: 600;
+    color: var(--text-light); text-transform: uppercase;
+    letter-spacing: .5px; margin-bottom: 6px;
+}
+.inv-label .req { color: #ef4444; margin-left: 2px; }
+.inv-input, .inv-select, .inv-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: .95rem;
+    color: var(--text-dark);
+    background: #fafafa;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    outline: none;
+    font-family: inherit;
+}
+.inv-input:focus, .inv-select:focus, .inv-textarea:focus {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.inv-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+.inv-textarea { resize: vertical; min-height: 88px; }
+
+/* Date grid */
+.inv-date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Line items table */
+.inv-table-wrap { overflow-x: auto; }
+.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.inv-table thead th {
+    padding: 10px 12px;
+    background: #f8fafc;
+    font-size: .75rem; font-weight: 700;
+    color: var(--text-light); text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+.inv-table thead th:first-child { border-radius: 6px 0 0 0; }
+.inv-table thead th:last-child  { border-radius: 0 6px 0 0; }
+.inv-table tbody tr.line-item { transition: background .15s; }
+.inv-table tbody tr.line-item:hover { background: #f8fafc; }
+.inv-table tbody tr.line-item td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.inv-table .tbl-input {
+    width: 100%; padding: 8px 10px;
+    border: 1.5px solid #e5e7eb; border-radius: 6px;
+    font-size: .9rem; color: var(--text-dark);
+    background: #fff; outline: none; font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+}
+.inv-table .tbl-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.inv-table .tbl-input.tbl-readonly { background: #f1f5f9; color: #475569; font-weight: 600; cursor: default; }
+.tbl-remove-btn {
+    width: 32px; height: 32px; border-radius: 6px;
+    border: none; background: #fef2f2; color: #dc2626;
+    font-size: 1.2rem; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, transform .1s;
+}
+.tbl-remove-btn:hover { background: #fee2e2; transform: scale(1.1); }
+.tbl-remove-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+/* Add row button */
+.inv-add-row-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; margin: 14px 0 0;
+    background: #eff6ff; color: #2563eb;
+    border: 1.5px dashed #93c5fd; border-radius: 8px;
+    font-size: .88rem; font-weight: 600; cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.inv-add-row-btn:hover { background: #dbeafe; border-color: #60a5fa; }
+
+/* Sticky summary sidebar */
+.inv-summary-col { position: sticky; top: 80px; }
+.inv-summary-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+.inv-summary-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    padding: 18px 20px;
+}
+.inv-summary-header h4 { color: #fff; font-size: .95rem; font-weight: 700; margin: 0 0 4px; }
+.inv-summary-header p  { color: rgba(255,255,255,.7); font-size: .8rem; margin: 0; }
+.inv-summary-body { padding: 20px; }
+.inv-summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+    font-size: .9rem;
+}
+.inv-summary-row:last-child { border-bottom: none; }
+.inv-summary-row .s-label { color: var(--text-light); font-weight: 500; }
+.inv-summary-row .s-value { font-weight: 700; color: var(--text-dark); }
+.inv-summary-row .s-value.s-muted { color: var(--text-light); font-weight: 500; }
+.inv-summary-total {
+    margin-top: 12px; padding: 14px 16px;
+    background: #f0f9ff; border-radius: 10px; border: 1.5px solid #bae6fd;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.inv-summary-total .t-label { font-size: 1rem; font-weight: 700; color: var(--text-dark); }
+.inv-summary-total .t-value { font-size: 1.4rem; font-weight: 800; color: #2563eb; }
+
+/* Line count badge */
+.inv-item-count {
+    display: inline-block;
+    background: #eff6ff; color: #2563eb;
+    border-radius: 99px; font-size: .75rem; font-weight: 700;
+    padding: 1px 9px; margin-left: 6px;
+}
+
+/* Action buttons */
+.inv-actions {
+    display: flex; gap: 12px; justify-content: flex-end;
+    padding-top: 8px;
+}
+.inv-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 9px;
+    font-size: .95rem; font-weight: 600; cursor: pointer;
+    border: none; text-decoration: none; transition: all .2s;
+}
+.inv-btn-ghost {
+    background: #f3f4f6; color: var(--text-dark);
+    border: 1.5px solid #e5e7eb;
+}
+.inv-btn-ghost:hover { background: #e5e7eb; }
+.inv-btn-primary {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(22,163,74,.35);
+}
+.inv-btn-primary:hover { box-shadow: 0 6px 20px rgba(22,163,74,.45); transform: translateY(-1px); }
+.inv-btn-primary:active { transform: translateY(0); }
+
+/* Alert */
+.inv-alert {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: #fef2f2; border: 1.5px solid #fecaca;
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;
+}
+.inv-alert-icon { color: #dc2626; flex-shrink: 0; margin-top: 1px; }
+.inv-alert ul { margin: 6px 0 0 16px; color: #dc2626; font-size: .9rem; }
+.inv-alert strong { color: #dc2626; }
+
+.inv-warn {
+    background: #fffbeb; border: 1.5px solid #fde68a;
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+}
+.inv-warn strong { color: #92400e; }
+.inv-warn a { margin-left: 12px; }
+
+/* Row enter animation */
+@keyframes rowSlideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.line-item { animation: rowSlideIn .2s ease; }
+</style>
+
+<div class="inv-page">
+
+    <!-- Page Header -->
+    <div class="inv-header">
+        <div class="inv-header-left">
+            <div class="inv-header-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Create Invoice</h1>
+                <div class="inv-subtitle"><?= htmlspecialchars($company['name']) ?></div>
+            </div>
         </div>
-        
-        <div class="form-group">
-            <label for="invoice_date">Invoice Date <span style="color: red;">*</span></label>
-            <input type="date" name="invoice_date" id="invoice_date" class="form-control" 
-                   value="<?= date('Y-m-d') ?>" required onchange="updateDueDate()">
+        <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="inv-btn inv-btn-ghost">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Invoices
+        </a>
+    </div>
+
+    <?php if (!empty($errors)): ?>
+    <div class="inv-alert">
+        <div class="inv-alert-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-        
-        <div class="form-group">
-            <label for="due_date">Due Date <span style="color: red;">*</span></label>
-            <input type="date" name="due_date" id="due_date" class="form-control" 
-                   value="<?= date('Y-m-d', strtotime('+30 days')) ?>" required>
+        <div>
+            <strong>Please fix the following errors:</strong>
+            <ul><?php foreach ($errors as $error): ?><li><?= htmlspecialchars($error) ?></li><?php endforeach; ?></ul>
         </div>
     </div>
-    
-    <div class="form-card">
-        <h3 style="margin-bottom: 20px;">Line Items <span style="color: red;">*</span></h3>
+    <?php endif; ?>
 
-        <div style="display: grid; grid-template-columns: 2fr 100px 150px 150px 60px; gap: 15px; margin-bottom: 8px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #dee2e6;">
-            <div style="font-weight: 600; color: #555; font-size: 13px;">Description</div>
-            <div style="font-weight: 600; color: #555; font-size: 13px;">Quantity</div>
-            <div style="font-weight: 600; color: #555; font-size: 13px;">Unit Price</div>
-            <div style="font-weight: 600; color: #555; font-size: 13px;">Line Total</div>
-            <div></div>
+    <?php if (empty($customers)): ?>
+    <div class="inv-warn">
+        <svg width="20" height="20" fill="none" stroke="#d97706" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.293 3.716a2 2 0 013.414 0l7.071 12.247A2 2 0 0119.07 19H4.93a2 2 0 01-1.707-2.963L10.293 3.716z"/></svg>
+        <div><strong>No customers found.</strong> Create a customer first before making an invoice.
+        <a href="<?= WEB_ROOT ?>/customers/create.php?company=<?= $companyId ?>" class="btn btn-sm btn-primary">+ Create Customer</a></div>
+    </div>
+    <?php else: ?>
+
+    <form method="POST" action="" id="invoiceForm">
+    <div class="inv-layout">
+
+        <!-- ── Left column ── -->
+        <div>
+            <!-- Invoice Details -->
+            <div class="inv-card">
+                <div class="inv-card-header">
+                    <div class="inv-card-header-icon icon-blue">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <h3>Invoice Details</h3>
+                </div>
+                <div class="inv-card-body">
+                    <div class="inv-field">
+                        <label class="inv-label" for="customer_id">Customer <span class="req">*</span></label>
+                        <select name="customer_id" id="customer_id" class="inv-select" required onchange="updatePaymentTerms()">
+                            <option value="">Select Customer</option>
+                            <?php foreach ($customers as $cust): ?>
+                                <option value="<?= $cust['customer_id'] ?>"
+                                        data-payment-terms="<?= $cust['payment_terms'] ?>"
+                                        <?= $selectedCustomerId == $cust['customer_id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($cust['customer_name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="inv-date-grid">
+                        <div class="inv-field">
+                            <label class="inv-label" for="invoice_date">Invoice Date <span class="req">*</span></label>
+                            <input type="date" name="invoice_date" id="invoice_date" class="inv-input"
+                                   value="<?= date('Y-m-d') ?>" required onchange="updateDueDate()">
+                        </div>
+                        <div class="inv-field">
+                            <label class="inv-label" for="due_date">Due Date <span class="req">*</span></label>
+                            <input type="date" name="due_date" id="due_date" class="inv-input"
+                                   value="<?= date('Y-m-d', strtotime('+30 days')) ?>" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <div class="inv-card">
+                <div class="inv-card-header">
+                    <div class="inv-card-header-icon icon-green">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                    </div>
+                    <h3>Line Items</h3>
+                    <span class="badge-req">Required</span>
+                    <span class="inv-item-count" id="itemCountBadge">1 item</span>
+                </div>
+                <div class="inv-card-body">
+                    <div class="inv-table-wrap">
+                        <table class="inv-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:40%">Description</th>
+                                    <th style="width:10%; text-align:center">Qty</th>
+                                    <th style="width:18%; text-align:right">Unit Price</th>
+                                    <th style="width:18%; text-align:right">Line Total</th>
+                                    <th style="width:40px"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="lineItemsContainer">
+                                <tr class="line-item">
+                                    <td><input type="text" name="item_description[]" class="tbl-input" placeholder="Item description"></td>
+                                    <td><input type="number" name="item_quantity[]" class="tbl-input item-qty" style="text-align:center" min="0" step="0.01" value="1" oninput="calculateLineTotals()"></td>
+                                    <td><input type="number" name="item_unit_price[]" class="tbl-input item-price" style="text-align:right" min="0" step="0.01" placeholder="0.00" oninput="calculateLineTotals()"></td>
+                                    <td><input type="text" class="tbl-input tbl-readonly line-total" style="text-align:right" readonly value="₱0.00"></td>
+                                    <td><button type="button" class="tbl-remove-btn" onclick="removeLineItem(this)" disabled title="Remove">×</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="inv-add-row-btn" onclick="addLineItem()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        Add Line Item
+                    </button>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="inv-card">
+                <div class="inv-card-header">
+                    <div class="inv-card-header-icon icon-amber">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                    </div>
+                    <h3>Additional Information</h3>
+                </div>
+                <div class="inv-card-body">
+                    <div class="inv-field">
+                        <label class="inv-label" for="notes">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0">(internal — not shown to customer)</span></label>
+                        <textarea name="notes" id="notes" class="inv-textarea" placeholder="Add internal notes…"></textarea>
+                    </div>
+                    <div class="inv-field">
+                        <label class="inv-label" for="terms_conditions">Terms &amp; Conditions</label>
+                        <textarea name="terms_conditions" id="terms_conditions" class="inv-textarea" placeholder="Terms and conditions shown on invoice">Payment is due within the specified payment terms. Late payments may incur additional charges.</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Row -->
+            <div class="inv-actions">
+                <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="inv-btn inv-btn-ghost">
+                    Cancel
+                </a>
+                <button type="submit" class="inv-btn inv-btn-primary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    Create Invoice
+                </button>
+            </div>
         </div>
 
-        <div id="lineItemsContainer">
-            <div class="line-item" style="display: grid; grid-template-columns: 2fr 100px 150px 150px 60px; gap: 15px; margin-bottom: 10px; align-items: center;">
-                <div>
-                    <input type="text" name="item_description[]" class="form-control" placeholder="Item description">
+        <!-- ── Right column — Sticky Summary ── -->
+        <div class="inv-summary-col">
+            <div class="inv-summary-card">
+                <div class="inv-summary-header">
+                    <h4>Invoice Summary</h4>
+                    <p id="summaryCustomerName">No customer selected</p>
                 </div>
-                <div>
-                    <input type="number" name="item_quantity[]" class="form-control item-qty" 
-                           min="0" step="0.01" value="1" onchange="calculateLineTotals()">
-                </div>
-                <div>
-                    <input type="number" name="item_unit_price[]" class="form-control item-price" 
-                           min="0" step="0.01" placeholder="0.00" onchange="calculateLineTotals()">
-                </div>
-                <div>
-                    <input type="text" class="form-control line-total" readonly value="₱0.00" style="background: #f5f5f5;">
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)" style="width: 100%;">×</button>
+                <div class="inv-summary-body">
+                    <div class="inv-summary-row">
+                        <span class="s-label">Invoice Date</span>
+                        <span class="s-value" id="summaryInvoiceDate"><?= date('M d, Y') ?></span>
+                    </div>
+                    <div class="inv-summary-row">
+                        <span class="s-label">Due Date</span>
+                        <span class="s-value" id="summaryDueDate"><?= date('M d, Y', strtotime('+30 days')) ?></span>
+                    </div>
+                    <div class="inv-summary-row">
+                        <span class="s-label">Line Items</span>
+                        <span class="s-value" id="summaryItemCount">1 item</span>
+                    </div>
+                    <div class="inv-summary-row">
+                        <span class="s-label">Subtotal</span>
+                        <span class="s-value" id="subtotalDisplay">₱0.00</span>
+                    </div>
+                    <div class="inv-summary-row">
+                        <span class="s-label">Tax (0%)</span>
+                        <span class="s-value s-muted" id="taxDisplay">₱0.00</span>
+                    </div>
+                    <div class="inv-summary-total">
+                        <span class="t-label">Total Due</span>
+                        <span class="t-value" id="totalDisplay">₱0.00</span>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <button type="button" class="btn btn-secondary" onclick="addLineItem()">+ Add Line Item</button>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
-            <div style="display: flex; justify-content: flex-end;">
-                <div style="min-width: 300px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 18px;">
-                        <strong>Subtotal:</strong>
-                        <strong id="subtotalDisplay">₱0.00</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <span>Tax (0%):</span>
-                        <span id="taxDisplay">₱0.00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #333; font-size: 20px;">
-                        <strong>Total:</strong>
-                        <strong id="totalDisplay" style="color: var(--primary-color);">₱0.00</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="form-card">
-        <h3 style="margin-bottom: 20px;">Additional Information</h3>
-        
-        <div class="form-group">
-            <label for="notes">Notes (internal)</label>
-            <textarea name="notes" id="notes" class="form-control" rows="3" 
-                      placeholder="Internal notes (not shown to customer)"></textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="terms_conditions">Terms & Conditions</label>
-            <textarea name="terms_conditions" id="terms_conditions" class="form-control" rows="3" 
-                      placeholder="Terms and conditions shown on invoice">Payment is due within the specified payment terms. Late payments may incur additional charges.</textarea>
-        </div>
-    </div>
-    
-    <div style="display: flex; gap: 15px; justify-content: flex-end;">
-        <a href="<?= WEB_ROOT ?>/invoices/list.php?company=<?= $companyId ?>" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-success">Create Invoice</button>
-    </div>
-</form>
 
-<?php endif; ?>
+    </div>
+    </form>
+
+    <?php endif; ?>
+
+</div><!-- /inv-page -->
 
 <script>
-function addLineItem() {
-    const container = document.getElementById('lineItemsContainer');
-    const newItem = container.firstElementChild.cloneNode(true);
-    
-    // Clear values
-    const inputs = newItem.querySelectorAll('input');
-    inputs.forEach(input => {
-        if (input.classList.contains('item-qty')) {
-            input.value = '1';
-        } else if (input.classList.contains('line-total')) {
-            input.value = '₱0.00';
-        } else {
-            input.value = '';
-        }
+function fmt(n) {
+    return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(val) {
+    if (!val) return '—';
+    const d = new Date(val + 'T00:00:00');
+    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: '2-digit' });
+}
+
+function calculateLineTotals() {
+    const rows = document.querySelectorAll('#lineItemsContainer .line-item');
+    let subtotal = 0;
+    rows.forEach(row => {
+        const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        const total = qty * price;
+        row.querySelector('.line-total').value = fmt(total);
+        subtotal += total;
     });
-    
-    container.appendChild(newItem);
+    const total = subtotal;
+    document.getElementById('subtotalDisplay').textContent = fmt(subtotal);
+    document.getElementById('taxDisplay').textContent      = fmt(0);
+    document.getElementById('totalDisplay').textContent    = fmt(total);
+
+    const count = rows.length;
+    const label = count + (count === 1 ? ' item' : ' items');
+    document.getElementById('itemCountBadge').textContent  = label;
+    document.getElementById('summaryItemCount').textContent = label;
+
+    updateRemoveButtons();
+}
+
+function updateRemoveButtons() {
+    const btns = document.querySelectorAll('#lineItemsContainer .tbl-remove-btn');
+    btns.forEach(btn => btn.disabled = btns.length === 1);
+}
+
+function addLineItem() {
+    const tbody = document.getElementById('lineItemsContainer');
+    const tr = document.createElement('tr');
+    tr.className = 'line-item';
+    tr.innerHTML = `
+        <td><input type="text" name="item_description[]" class="tbl-input" placeholder="Item description"></td>
+        <td><input type="number" name="item_quantity[]" class="tbl-input item-qty" style="text-align:center" min="0" step="0.01" value="1" oninput="calculateLineTotals()"></td>
+        <td><input type="number" name="item_unit_price[]" class="tbl-input item-price" style="text-align:right" min="0" step="0.01" placeholder="0.00" oninput="calculateLineTotals()"></td>
+        <td><input type="text" class="tbl-input tbl-readonly line-total" style="text-align:right" readonly value="₱0.00"></td>
+        <td><button type="button" class="tbl-remove-btn" onclick="removeLineItem(this)" title="Remove">×</button></td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector('input').focus();
     calculateLineTotals();
 }
 
-function removeLineItem(button) {
-    const container = document.getElementById('lineItemsContainer');
-    if (container.children.length > 1) {
-        button.closest('.line-item').remove();
+function removeLineItem(btn) {
+    const rows = document.querySelectorAll('#lineItemsContainer .line-item');
+    if (rows.length > 1) {
+        btn.closest('tr').remove();
         calculateLineTotals();
     }
 }
 
-function calculateLineTotals() {
-    const lineItems = document.querySelectorAll('.line-item');
-    let subtotal = 0;
-    
-    lineItems.forEach(item => {
-        const qty = parseFloat(item.querySelector('.item-qty').value) || 0;
-        const price = parseFloat(item.querySelector('.item-price').value) || 0;
-        const lineTotal = qty * price;
-        
-        item.querySelector('.line-total').value = '₱' + lineTotal.toFixed(2);
-        subtotal += lineTotal;
-    });
-    
-    const tax = 0; // No tax for now
-    const total = subtotal + tax;
-    
-    document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2);
-    document.getElementById('taxDisplay').textContent = '₱' + tax.toFixed(2);
-    document.getElementById('totalDisplay').textContent = '₱' + total.toFixed(2);
-}
-
 function updatePaymentTerms() {
-    const customerSelect = document.getElementById('customer_id');
-    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-    const paymentTerms = parseInt(selectedOption.dataset.paymentTerms) || 30;
-    
     updateDueDate();
+    const sel = document.getElementById('customer_id');
+    const name = sel.options[sel.selectedIndex].text;
+    document.getElementById('summaryCustomerName').textContent = sel.value ? name : 'No customer selected';
 }
 
 function updateDueDate() {
     const invoiceDate = document.getElementById('invoice_date').value;
-    const customerSelect = document.getElementById('customer_id');
-    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-    const paymentTerms = parseInt(selectedOption.dataset.paymentTerms) || 30;
-    
+    const sel  = document.getElementById('customer_id');
+    const opt  = sel.options[sel.selectedIndex];
+    const days = parseInt(opt?.dataset.paymentTerms) || 30;
     if (invoiceDate) {
-        const date = new Date(invoiceDate);
-        date.setDate(date.getDate() + paymentTerms);
-        document.getElementById('due_date').valueAsDate = date;
+        const d = new Date(invoiceDate + 'T00:00:00');
+        d.setDate(d.getDate() + days);
+        const ymd = d.toISOString().split('T')[0];
+        document.getElementById('due_date').value = ymd;
+        document.getElementById('summaryDueDate').textContent = fmtDate(ymd);
     }
+    document.getElementById('summaryInvoiceDate').textContent = fmtDate(invoiceDate);
 }
 
-// Initialize
+// Sync summary on date input
+document.getElementById('invoice_date').addEventListener('change', () => {
+    document.getElementById('summaryInvoiceDate').textContent = fmtDate(document.getElementById('invoice_date').value);
+});
+document.getElementById('due_date').addEventListener('change', () => {
+    document.getElementById('summaryDueDate').textContent = fmtDate(document.getElementById('due_date').value);
+});
+
+// Init
 calculateLineTotals();
+<?php if ($selectedCustomerId): ?>
+updatePaymentTerms();
+<?php endif; ?>
 </script>
 
 <?php include __DIR__ . '/../views/footer.php'; ?>
