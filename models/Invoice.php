@@ -140,6 +140,73 @@ class Invoice {
     }
     
     /**
+     * Update an existing invoice (header + line items).
+     * Replaces all existing items with the new set.
+     *
+     * @param int   $invoiceId Invoice ID
+     * @param int   $companyId Company ID (security check)
+     * @param array $data      Invoice header fields
+     * @param array $items     New line items
+     * @return bool
+     */
+    public static function update($invoiceId, $companyId, $data, $items) {
+        // Recalculate totals
+        $subtotal = 0;
+        foreach ($items as $item) {
+            $subtotal += $item['quantity'] * $item['unit_price'];
+        }
+        $taxAmount   = $data['tax_amount'] ?? 0;
+        $totalAmount = $subtotal + $taxAmount;
+
+        // Preserve amount_paid, recalculate amount_due
+        $existing   = self::getById($invoiceId, $companyId);
+        $amountPaid = $existing ? (float)$existing['amount_paid'] : 0;
+        $amountDue  = max(0, $totalAmount - $amountPaid);
+
+        // Update invoice header
+        $sql = "UPDATE invoices
+                SET customer_id  = ?,
+                    invoice_date = ?,
+                    due_date     = ?,
+                    subtotal     = ?,
+                    tax_amount   = ?,
+                    total_amount = ?,
+                    amount_due   = ?,
+                    notes        = ?,
+                    terms        = ?
+                WHERE invoice_id = ? AND company_id = ?";
+
+        executeQuery($sql, [
+            $data['customer_id'],
+            $data['invoice_date'],
+            $data['due_date'],
+            $subtotal,
+            $taxAmount,
+            $totalAmount,
+            $amountDue,
+            $data['notes']  ?? null,
+            $data['terms']  ?? null,
+            $invoiceId,
+            $companyId,
+        ]);
+
+        // Replace line items
+        executeQuery("DELETE FROM invoice_items WHERE invoice_id = ?", [$invoiceId]);
+
+        $sortOrder = 0;
+        foreach ($items as $item) {
+            $amount = $item['quantity'] * $item['unit_price'];
+            executeQuery(
+                "INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, amount, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?)",
+                [$invoiceId, $item['description'], $item['quantity'], $item['unit_price'], $amount, $sortOrder++]
+            );
+        }
+
+        return true;
+    }
+
+    /**
      * Update invoice status
      * 
      * @param int $invoiceId Invoice ID
