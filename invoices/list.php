@@ -182,6 +182,10 @@ include __DIR__ . '/../views/header.php';
                             <a href="<?= WEB_ROOT ?>/invoices/edit.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
                                class="btn btn-sm btn-secondary">Edit</a>
                         <?php endif; ?>
+                        <?php if (!in_array($inv['status'], ['paid', 'cancelled'])): ?>
+                            <a href="<?= WEB_ROOT ?>/invoices/move.php?id=<?= $inv['invoice_id'] ?>&company=<?= $companyId ?>" 
+                               class="btn btn-sm" style="background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;">Move</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
