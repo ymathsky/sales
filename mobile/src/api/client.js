@@ -210,6 +210,27 @@ export async function createInvoice(data) {
     return parseApiResponse(res);
 }
 
+export async function getInvoice(id) {
+    const res = await apiRequest(`/invoice-detail.php?id=${id}`);
+    return parseApiResponse(res);
+}
+
+export async function updateInvoiceStatus(invoiceId, status) {
+    const res = await apiRequest('/invoice-detail.php', {
+        method: 'POST',
+        body: JSON.stringify({ invoice_id: invoiceId, action: 'update_status', status }),
+    });
+    return parseApiResponse(res);
+}
+
+export async function recordInvoicePayment(invoiceId, amount) {
+    const res = await apiRequest('/invoice-detail.php', {
+        method: 'POST',
+        body: JSON.stringify({ invoice_id: invoiceId, action: 'record_payment', amount }),
+    });
+    return parseApiResponse(res);
+}
+
 // =========================================
 // Categories
 // =========================================

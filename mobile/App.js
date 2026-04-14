@@ -19,6 +19,7 @@ import InvoicesScreen from './src/screens/InvoicesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LockScreen from './src/screens/LockScreen';
 import MoveTransactionScreen from './src/screens/MoveTransactionScreen';
+import InvoiceViewScreen from './src/screens/InvoiceViewScreen';
 import { initializeFinancialAlerts } from './src/services/financialAlerts';
 
 const Stack = createNativeStackNavigator();
@@ -212,6 +213,19 @@ function AppNavigator() {
                                 headerTitleStyle: { fontWeight: '700' },
                             }}
                         />
+                        {can('manage_invoices') && (
+                            <Stack.Screen
+                                name="InvoiceView"
+                                component={InvoiceViewScreen}
+                                options={{
+                                    headerShown: true,
+                                    title: 'Invoice',
+                                    headerStyle: { backgroundColor: '#1E3A8A' },
+                                    headerTintColor: '#fff',
+                                    headerTitleStyle: { fontWeight: '700' },
+                                }}
+                            />
+                        )}
                     </>
                 )}
             </Stack.Navigator>
