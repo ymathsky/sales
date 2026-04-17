@@ -282,6 +282,9 @@ include __DIR__ . '/../views/header.php';
                 Mark as Sent
             </button>
         </form>
+    <?php endif; ?>
+
+    <?php if (!in_array($invoice['status'], ['paid', 'cancelled'])): ?>
         <a href="<?= WEB_ROOT ?>/invoices/edit.php?id=<?= $invoiceId ?>&company=<?= $companyId ?>" class="btn btn-secondary">
             Edit Invoice
         </a>
