@@ -93,13 +93,31 @@ class Invoice {
         
         $taxAmount = $data['tax_amount'] ?? 0;
         $totalAmount = $subtotal + $taxAmount;
+
+        // Calculate amount_paid from items marked as paid
+        $amountPaid = 0;
+        foreach ($items as $item) {
+            if (!empty($item['is_paid'])) {
+                $amountPaid += $item['quantity'] * $item['unit_price'];
+            }
+        }
+        $amountDue = max(0, $totalAmount - $amountPaid);
+
+        // Determine status
+        if ($amountPaid >= $totalAmount && $totalAmount > 0) {
+            $status = 'paid';
+        } elseif ($amountPaid > 0) {
+            $status = 'partial';
+        } else {
+            $status = 'draft';
+        }
         
         // Create invoice
         $sql = "INSERT INTO invoices 
                 (company_id, customer_id, invoice_number, invoice_date, due_date, 
                  subtotal, tax_amount, total_amount, amount_paid, amount_due, 
                  status, notes, terms, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'draft', ?, ?, ?)";
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         executeQuery($sql, [
             $data['company_id'],
@@ -110,7 +128,9 @@ class Invoice {
             $subtotal,
             $taxAmount,
             $totalAmount,
-            $totalAmount, // amount_due = total_amount initially
+            $amountPaid,
+            $amountDue,
+            $status,
             $data['notes'] ?? null,
             $data['terms'] ?? null,
             getCurrentUserId()
@@ -123,15 +143,17 @@ class Invoice {
         $sortOrder = 0;
         foreach ($items as $item) {
             $amount = $item['quantity'] * $item['unit_price'];
+            $isPaid = !empty($item['is_paid']) ? 1 : 0;
             $sql = "INSERT INTO invoice_items 
-                    (invoice_id, description, quantity, unit_price, amount, sort_order) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
+                    (invoice_id, description, quantity, unit_price, amount, is_paid, sort_order) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
             executeQuery($sql, [
                 $invoiceId,
                 $item['description'],
                 $item['quantity'],
                 $item['unit_price'],
                 $amount,
+                $isPaid,
                 $sortOrder++
             ]);
         }
@@ -158,10 +180,23 @@ class Invoice {
         $taxAmount   = $data['tax_amount'] ?? 0;
         $totalAmount = $subtotal + $taxAmount;
 
-        // Preserve amount_paid, recalculate amount_due
-        $existing   = self::getById($invoiceId, $companyId);
-        $amountPaid = $existing ? (float)$existing['amount_paid'] : 0;
-        $amountDue  = max(0, $totalAmount - $amountPaid);
+        // Calculate amount_paid from items marked as paid
+        $amountPaid = 0;
+        foreach ($items as $item) {
+            if (!empty($item['is_paid'])) {
+                $amountPaid += $item['quantity'] * $item['unit_price'];
+            }
+        }
+        $amountDue = max(0, $totalAmount - $amountPaid);
+
+        // Determine status
+        if ($amountPaid >= $totalAmount && $totalAmount > 0) {
+            $status = 'paid';
+        } elseif ($amountPaid > 0) {
+            $status = 'partial';
+        } else {
+            $status = 'draft';
+        }
 
         // Update invoice header
         $sql = "UPDATE invoices
@@ -171,7 +206,9 @@ class Invoice {
                     subtotal     = ?,
                     tax_amount   = ?,
                     total_amount = ?,
+                    amount_paid  = ?,
                     amount_due   = ?,
+                    status       = ?,
                     notes        = ?,
                     terms        = ?
                 WHERE invoice_id = ? AND company_id = ?";
@@ -183,7 +220,9 @@ class Invoice {
             $subtotal,
             $taxAmount,
             $totalAmount,
+            $amountPaid,
             $amountDue,
+            $status,
             $data['notes']  ?? null,
             $data['terms']  ?? null,
             $invoiceId,
@@ -196,10 +235,11 @@ class Invoice {
         $sortOrder = 0;
         foreach ($items as $item) {
             $amount = $item['quantity'] * $item['unit_price'];
+            $isPaid = !empty($item['is_paid']) ? 1 : 0;
             executeQuery(
-                "INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, amount, sort_order)
-                 VALUES (?, ?, ?, ?, ?, ?)",
-                [$invoiceId, $item['description'], $item['quantity'], $item['unit_price'], $amount, $sortOrder++]
+                "INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, amount, is_paid, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [$invoiceId, $item['description'], $item['quantity'], $item['unit_price'], $amount, $isPaid, $sortOrder++]
             );
         }
 

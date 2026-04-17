@@ -34,9 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Line items
     $itemDescriptions = $_POST['item_description'] ?? [];
-    $itemQuantities = $_POST['item_quantity'] ?? [];
-    $itemUnitPrices = $_POST['item_unit_price'] ?? [];
-    
+    $itemQuantities   = $_POST['item_quantity']    ?? [];
+    $itemUnitPrices   = $_POST['item_unit_price']  ?? [];
+    $itemIsPaidArr    = $_POST['item_is_paid']     ?? [];
+
     // Validation
     if (!$customerId) {
         $errors[] = 'Please select a customer.';
@@ -52,14 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $items = [];
     foreach ($itemDescriptions as $index => $description) {
         $description = trim($description);
-        $quantity = floatval($itemQuantities[$index] ?? 0);
-        $unitPrice = floatval($itemUnitPrices[$index] ?? 0);
+        $quantity    = floatval($itemQuantities[$index] ?? 0);
+        $unitPrice   = floatval($itemUnitPrices[$index]  ?? 0);
         
         if ($description && $quantity > 0 && $unitPrice > 0) {
             $items[] = [
                 'description' => $description,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice
+                'quantity'    => $quantity,
+                'unit_price'  => $unitPrice,
+                'is_paid'     => isset($itemIsPaidArr[$index]) ? 1 : 0,
             ];
         }
     }
@@ -224,6 +226,14 @@ include __DIR__ . '/../views/header.php';
 }
 .tbl-remove-btn:hover { background: #fee2e2; transform: scale(1.1); }
 .tbl-remove-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+/* Paid toggle */
+.paid-toggle { display:inline-flex; align-items:center; cursor:pointer; }
+.paid-toggle input[type=checkbox] { display:none; }
+.paid-pill { display:inline-block; width:36px; height:20px; background:#e5e7eb; border-radius:99px; position:relative; transition:background .2s; flex-shrink:0; }
+.paid-pill::after { content:''; position:absolute; left:3px; top:3px; width:14px; height:14px; background:#fff; border-radius:50%; transition:left .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.paid-toggle input:checked + .paid-pill { background:#16a34a; }
+.paid-toggle input:checked + .paid-pill::after { left:19px; }
+tr.line-item { transition:background .2s; }
 
 /* Add row button */
 .inv-add-row-btn {
@@ -425,10 +435,11 @@ include __DIR__ . '/../views/header.php';
                         <table class="inv-table">
                             <thead>
                                 <tr>
-                                    <th style="width:40%">Description</th>
-                                    <th style="width:10%; text-align:center">Qty</th>
-                                    <th style="width:18%; text-align:right">Unit Price</th>
-                                    <th style="width:18%; text-align:right">Line Total</th>
+                                    <th style="width:37%">Description</th>
+                                    <th style="width:9%; text-align:center">Qty</th>
+                                    <th style="width:17%; text-align:right">Unit Price</th>
+                                    <th style="width:17%; text-align:right">Line Total</th>
+                                    <th style="width:60px; text-align:center">Paid</th>
                                     <th style="width:40px"></th>
                                 </tr>
                             </thead>
@@ -438,6 +449,7 @@ include __DIR__ . '/../views/header.php';
                                     <td><input type="number" name="item_quantity[]" class="tbl-input item-qty" style="text-align:center" min="0" step="0.01" value="1" oninput="calculateLineTotals()"></td>
                                     <td><input type="number" name="item_unit_price[]" class="tbl-input item-price" style="text-align:right" min="0" step="0.01" placeholder="0.00" oninput="calculateLineTotals()"></td>
                                     <td><input type="text" class="tbl-input tbl-readonly line-total" style="text-align:right" readonly value="₱0.00"></td>
+                                    <td style="text-align:center"><label class="paid-toggle"><input type="checkbox" name="item_is_paid[]" class="item-paid-cb" onchange="calculateLineTotals()"><span class="paid-pill"></span></label></td>
                                     <td><button type="button" class="tbl-remove-btn" onclick="removeLineItem(this)" disabled title="Remove">×</button></td>
                                 </tr>
                             </tbody>
@@ -510,8 +522,12 @@ include __DIR__ . '/../views/header.php';
                         <span class="s-label">Tax (0%)</span>
                         <span class="s-value s-muted" id="taxDisplay">₱0.00</span>
                     </div>
+                    <div class="inv-summary-row" id="paidRow" style="display:none">
+                        <span class="s-label" style="color:#16a34a">✓ Paid</span>
+                        <span class="s-value" style="color:#16a34a" id="paidDisplay">₱0.00</span>
+                    </div>
                     <div class="inv-summary-total">
-                        <span class="t-label">Total Due</span>
+                        <span class="t-label" id="totalLabel">Total Due</span>
                         <span class="t-value" id="totalDisplay">₱0.00</span>
                     </div>
                 </div>
@@ -538,22 +554,34 @@ function fmtDate(val) {
 
 function calculateLineTotals() {
     const rows = document.querySelectorAll('#lineItemsContainer .line-item');
-    let subtotal = 0;
+    let subtotal = 0, paidAmount = 0;
     rows.forEach(row => {
-        const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
-        const price = parseFloat(row.querySelector('.item-price').value) || 0;
-        const total = qty * price;
+        const qty    = parseFloat(row.querySelector('.item-qty').value)   || 0;
+        const price  = parseFloat(row.querySelector('.item-price').value) || 0;
+        const total  = qty * price;
+        const isPaid = row.querySelector('.item-paid-cb').checked;
         row.querySelector('.line-total').value = fmt(total);
         subtotal += total;
+        if (isPaid) paidAmount += total;
+        row.style.background = isPaid ? '#f0fdf4' : '';
     });
-    const total = subtotal;
+    const balanceDue = subtotal - paidAmount;
     document.getElementById('subtotalDisplay').textContent = fmt(subtotal);
     document.getElementById('taxDisplay').textContent      = fmt(0);
-    document.getElementById('totalDisplay').textContent    = fmt(total);
+    document.getElementById('totalDisplay').textContent    = fmt(balanceDue);
+    document.getElementById('totalLabel').textContent      = paidAmount > 0 ? 'Balance Due' : 'Total Due';
+
+    const paidRow = document.getElementById('paidRow');
+    if (paidAmount > 0) {
+        paidRow.style.display = '';
+        document.getElementById('paidDisplay').textContent = fmt(paidAmount);
+    } else {
+        paidRow.style.display = 'none';
+    }
 
     const count = rows.length;
     const label = count + (count === 1 ? ' item' : ' items');
-    document.getElementById('itemCountBadge').textContent  = label;
+    document.getElementById('itemCountBadge').textContent   = label;
     document.getElementById('summaryItemCount').textContent = label;
 
     updateRemoveButtons();
@@ -573,6 +601,7 @@ function addLineItem() {
         <td><input type="number" name="item_quantity[]" class="tbl-input item-qty" style="text-align:center" min="0" step="0.01" value="1" oninput="calculateLineTotals()"></td>
         <td><input type="number" name="item_unit_price[]" class="tbl-input item-price" style="text-align:right" min="0" step="0.01" placeholder="0.00" oninput="calculateLineTotals()"></td>
         <td><input type="text" class="tbl-input tbl-readonly line-total" style="text-align:right" readonly value="₱0.00"></td>
+        <td style="text-align:center"><label class="paid-toggle"><input type="checkbox" name="item_is_paid[]" class="item-paid-cb" onchange="calculateLineTotals()"><span class="paid-pill"></span></label></td>
         <td><button type="button" class="tbl-remove-btn" onclick="removeLineItem(this)" title="Remove">×</button></td>
     `;
     tbody.appendChild(tr);
