@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'description' => $description,
                 'quantity'    => $quantity,
                 'unit_price'  => $unitPrice,
-                'is_paid'     => isset($itemIsPaidArr[$index]) ? 1 : 0,
+                'is_paid'     => !empty($itemIsPaidArr[$index]) ? 1 : 0,
             ];
         }
     }
@@ -449,7 +449,7 @@ tr.line-item { transition:background .2s; }
                                     <td><input type="number" name="item_quantity[]" class="tbl-input item-qty" style="text-align:center" min="0" step="0.01" value="1" oninput="calculateLineTotals()"></td>
                                     <td><input type="number" name="item_unit_price[]" class="tbl-input item-price" style="text-align:right" min="0" step="0.01" placeholder="0.00" oninput="calculateLineTotals()"></td>
                                     <td><input type="text" class="tbl-input tbl-readonly line-total" style="text-align:right" readonly value="₱0.00"></td>
-                                    <td style="text-align:center"><label class="paid-toggle"><input type="checkbox" name="item_is_paid[]" class="item-paid-cb" onchange="calculateLineTotals()"><span class="paid-pill"></span></label></td>
+                                    <td style="text-align:center"><label class="paid-toggle"><input type="checkbox" class="item-paid-cb" onchange="calculateLineTotals()"><span class="paid-pill"></span></label></td>
                                     <td><button type="button" class="tbl-remove-btn" onclick="removeLineItem(this)" disabled title="Remove">×</button></td>
                                 </tr>
                             </tbody>
@@ -601,7 +601,7 @@ function addLineItem() {
         <td><input type="number" name="item_quantity[]" class="tbl-input item-qty" style="text-align:center" min="0" step="0.01" value="1" oninput="calculateLineTotals()"></td>
         <td><input type="number" name="item_unit_price[]" class="tbl-input item-price" style="text-align:right" min="0" step="0.01" placeholder="0.00" oninput="calculateLineTotals()"></td>
         <td><input type="text" class="tbl-input tbl-readonly line-total" style="text-align:right" readonly value="₱0.00"></td>
-        <td style="text-align:center"><label class="paid-toggle"><input type="checkbox" name="item_is_paid[]" class="item-paid-cb" onchange="calculateLineTotals()"><span class="paid-pill"></span></label></td>
+        <td style="text-align:center"><label class="paid-toggle"><input type="checkbox" class="item-paid-cb" onchange="calculateLineTotals()"><span class="paid-pill"></span></label></td>
         <td><button type="button" class="tbl-remove-btn" onclick="removeLineItem(this)" title="Remove">×</button></td>
     `;
     tbody.appendChild(tr);
@@ -645,6 +645,17 @@ document.getElementById('invoice_date').addEventListener('change', () => {
 });
 document.getElementById('due_date').addEventListener('change', () => {
     document.getElementById('summaryDueDate').textContent = fmtDate(document.getElementById('due_date').value);
+});
+
+// Serialize is_paid values with correct indices before submission
+document.getElementById('invoiceForm').addEventListener('submit', function() {
+    document.querySelectorAll('#lineItemsContainer .line-item').forEach(function(row, idx) {
+        var h = document.createElement('input');
+        h.type  = 'hidden';
+        h.name  = 'item_is_paid[' + idx + ']';
+        h.value = row.querySelector('.item-paid-cb').checked ? '1' : '0';
+        row.appendChild(h);
+    });
 });
 
 // Init
