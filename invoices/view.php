@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($amount > $invoice['amount_due']) {
             $errors[] = 'Payment amount cannot exceed balance due.';
         } else {
-            if (Invoice::recordPayment($invoiceId, $amount, $paymentDate, $paymentMethod, $notes)) {
+            if (Invoice::recordPayment($invoiceId, $companyId, $amount)) {
                 $success = 'Payment recorded successfully.';
                 // Refresh invoice
                 $invoice = Invoice::getById($invoiceId, $companyId);
@@ -204,8 +204,13 @@ include __DIR__ . '/../views/header.php';
         </thead>
         <tbody>
             <?php foreach ($items as $item): ?>
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 12px;"><?= nl2br(htmlspecialchars($item['description'])) ?></td>
+                <tr style="border-bottom: 1px solid #ddd;<?= !empty($item['is_paid']) ? 'background:#f0fdf4;' : '' ?>">
+                    <td style="padding: 12px;">
+                        <?= nl2br(htmlspecialchars($item['description'])) ?>
+                        <?php if (!empty($item['is_paid'])): ?>
+                            <span style="display:inline-block;margin-left:8px;background:#dcfce7;color:#16a34a;font-size:.72rem;font-weight:700;border-radius:99px;padding:1px 8px;vertical-align:middle;">✓ PAID</span>
+                        <?php endif; ?>
+                    </td>
                     <td style="padding: 12px; text-align: center;"><?= number_format($item['quantity'], 2) ?></td>
                     <td style="padding: 12px; text-align: right;"><?= formatMoney($item['unit_price']) ?></td>
                     <td style="padding: 12px; text-align: right; font-weight: 600;">
@@ -287,14 +292,12 @@ include __DIR__ . '/../views/header.php';
             Record Payment
         </button>
         
-        <?php if ($invoice['status'] == 'sent' || $invoice['status'] == 'overdue'): ?>
-            <form method="POST" style="display: inline;">
-                <input type="hidden" name="action" value="mark_paid">
-                <button type="submit" class="btn btn-primary" onclick="return confirm('Mark this invoice as fully paid?')">
-                    Mark as Paid
-                </button>
-            </form>
-        <?php endif; ?>
+        <form method="POST" style="display: inline;">
+            <input type="hidden" name="action" value="mark_paid">
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Mark this invoice as fully paid?')">
+                Mark as Paid
+            </button>
+        </form>
     <?php endif; ?>
     
     <?php if ($invoice['status'] != 'cancelled' && $invoice['status'] != 'paid'): ?>

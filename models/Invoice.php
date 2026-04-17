@@ -255,8 +255,16 @@ class Invoice {
      * @return bool Success status
      */
     public static function updateStatus($invoiceId, $companyId, $status) {
-        $sql = "UPDATE invoices SET status = ? WHERE invoice_id = ? AND company_id = ?";
-        executeQuery($sql, [$status, $invoiceId, $companyId]);
+        if ($status === 'paid') {
+            // Sync amount_paid and amount_due when marking fully paid
+            $sql = "UPDATE invoices
+                    SET status = 'paid', amount_paid = total_amount, amount_due = 0
+                    WHERE invoice_id = ? AND company_id = ?";
+            executeQuery($sql, [$invoiceId, $companyId]);
+        } else {
+            $sql = "UPDATE invoices SET status = ? WHERE invoice_id = ? AND company_id = ?";
+            executeQuery($sql, [$status, $invoiceId, $companyId]);
+        }
         
         // Auto-update overdue status
         self::updateOverdueStatus($companyId);
